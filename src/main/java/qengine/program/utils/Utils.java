@@ -4,19 +4,10 @@ import java.util.ArrayList;
 
 public class Utils {
 
-    /**
-     * Display all the values contains in an index give
-     */
-    public static void displayIndex(ArrayList<ArrayList<Integer>> index) {
-        for (ArrayList<Integer> arr : index) {
-            System.out.println(arr);
-        }
+    public static String HLINE = "-----------------------------------------------------------";
+
+    public static void displayHLINE() {
+        System.out.println(HLINE + "\n");
     }
 
-    /**
-     * Return the current time in millisecond
-     */
-    public static long getCurrentTime() {
-        return System.currentTimeMillis();
-    }
 }
