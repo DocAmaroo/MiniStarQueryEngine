@@ -9,8 +9,8 @@ public class Log {
     /**
      * Output configuration
      */
-    private static final String FOLDER = "output";
-    private static final String FILENAME = "logs";
+    public static String FOLDER = "output";
+    private static final String FILENAME = "qengine_logs";
     private static final String FILE_EXTENSION = "csv";
 
 
@@ -25,27 +25,8 @@ public class Log {
      * Init file|buffer|print writer
      */
     static FileWriter FILE_WRITER;
-    static {
-        try {
-            // First create the output folder if it doesn't exist
-            File file = new File(FOLDER);
-            if (!file.exists()) {
-
-                // if an error occurred, else the folder has been created
-                if (!file.mkdirs()) System.out.println("[!] Cannot created output folder");
-
-            } else {
-
-                // Verification done, we can initialize our file writer
-                FILE_WRITER = new FileWriter(getOutputPath());
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    static BufferedWriter BUFFERED_WRITER = new BufferedWriter(FILE_WRITER);
-    static PrintWriter OUTPUT_FILE = new PrintWriter(BUFFERED_WRITER);
+    static BufferedWriter BUFFERED_WRITER;
+    static PrintWriter OUTPUT_FILE;
 
     /**
      * The execution time for te dictionary instantiation, by default is -1
@@ -62,6 +43,31 @@ public class Log {
      */
     public static String UNAVAILABLE = "NOT_AVAILABLE";
 
+    public static void initFileWriter() throws IOException {
+        try {
+            // First create the output folder if it doesn't exist
+            File file = new File(FOLDER);
+            if (!file.exists()) {
+
+                // if an error occurred, else the folder has been created
+                if (!file.mkdirs()) System.out.println("[!] Cannot created output folder");
+
+            } else {
+
+                // Verification done, we can initialize our writers
+                FILE_WRITER = new FileWriter(getOutputPath());
+                BUFFERED_WRITER = new BufferedWriter(FILE_WRITER);
+                OUTPUT_FILE = new PrintWriter(BUFFERED_WRITER);
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void setFOLDER(String FOLDER) throws IOException {
+        Log.FOLDER = FOLDER;
+    }
 
     public static void setExecTimeDictionary(long execTimeDictionary) {
         EXEC_TIME_DICTIONARY.setValue(execTimeDictionary);

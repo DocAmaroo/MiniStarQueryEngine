@@ -3,6 +3,8 @@ package qengine.program;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -24,25 +26,28 @@ import qengine.program.parsers.IndexationRDFHandler;
 import qengine.program.parsers.MainRDFHandler;
 import qengine.program.utils.Utils;
 
+import static java.lang.System.exit;
+import static java.lang.System.setErr;
+
 final class Main {
 	static final String baseURI = null;
-	static final String queryFilename = "sample_query.queryset";
-	static final String dataFilename = "sample_data.nt";
+	static String queryFilename = "";
+	static String dataFilename = "";
 
 	/**
 	 * Votre répertoire de travail où vont se trouver les fichiers à lire
 	 */
-	static final String workingDir = "data/";
+	static String workingDir = "";
 
 	/**
 	 * Fichier contenant les requêtes sparql
 	 */
-	static final String queryFile = workingDir + queryFilename;
+	static String queryFile;
 
 	/**
 	 * Fichier contenant des données rdf
 	 */
-	static final String dataFile = workingDir + dataFilename;
+	static String dataFile;
 
 	static final Dictionary dictionary = Dictionary.getInstance();
 
@@ -74,6 +79,8 @@ final class Main {
 	 * Entrée du programme
 	 */
 	public static void main(String[] args) throws Exception {
+		handleArguments(args);
+
 		System.out.println("# Parsing data ----------------------------------------");
 		parseData();
 
@@ -85,6 +92,91 @@ final class Main {
 	}
 
 	// ========================================================================
+
+	public static void handleArguments(String[] args) throws IOException {
+
+		// Use a List for ease of use
+		List<String> argsToList = Arrays.asList(args);
+		int index = -1;
+
+		if (argsToList.contains("-help")) {
+			help();
+			exit(0);
+		}
+
+		ArrayList<String> mandatoryOptions = new ArrayList<>(Arrays.asList("-queries", "-data"));
+		if (!argsToList.containsAll(mandatoryOptions)) {
+			System.err.println("[!] No query or/and data file give\n[i] Use -help for more information");
+			exit(0);
+		}
+
+		for (int i = 0; i < args.length; i++) {
+
+			// If an option is found
+			if (args[i].startsWith("-")) {
+
+				String optionName = args[i];
+				String optionValue = args[i+1];
+
+				// Check the next value
+				optionValue = checkOptionValue(optionName, optionValue);
+				applyArgument(optionName, optionValue);
+
+				i++;
+			}
+		}
+
+		// Set the path to the files
+		queryFile = workingDir + "/" + queryFilename;
+		dataFile = workingDir + "/" + dataFilename;
+
+		// Init log writers
+		Log.initFileWriter();
+	}
+
+	public static void applyArgument(String option, String value) throws IOException {
+		switch (option) {
+			case "-workingDir":
+				workingDir = value;
+				break;
+			case "-queries":
+				queryFilename = value;
+				break;
+			case "-data":
+				dataFilename = value;
+				break;
+			case "-output":
+				Log.setFOLDER(value);
+				break;
+		}
+	}
+
+	public static String checkOptionValue(String option, String value) {
+		if (value.startsWith("-")) {
+			System.err.println("[!] The value of the option " + option + " is incorrect.");
+			System.err.println("\t Value received: " + value);
+			exit(0);
+		}
+
+		if (value.endsWith("/")) {
+			return value.substring(0, value.length() - 1);
+		}
+
+		return value;
+	}
+
+	public static void help() {
+		System.out.println("java -jar <path/to/qengine.jar> [OPTIONS]");
+		System.out.println("\n[i] See available options below:");
+		System.out.println("\t -help --> show this message");
+		System.out.println("\t -workingDir <path/to/dir> --> path to the directory containing queries or/and data. This value is optional");
+		System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
+		System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
+		System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
+		System.out.println("\n[i] Usage example");
+		System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
+		System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");
+	}
 
 	/**
 	 * Traite chaque requête lue dans {@link #queryFile} avec {@link #processAQuery(ParsedQuery)}.
