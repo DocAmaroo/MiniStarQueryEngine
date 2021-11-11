@@ -1,6 +1,7 @@
 package qengine.program.logs;
 
 import qengine.program.models.ExecutionTime;
+import qengine.program.utils.Utils;
 
 import java.io.*;
 
@@ -89,6 +90,7 @@ public class Log {
         OUTPUT_FILE.println(EXEC_TIME_INDEXATION.toCSV());
 
         System.out.println("\n[+] Logs have been successfully saved on: " + getOutputPath());
+        Utils.displayHLINE();
         closeFileBuffer();
     }
 
@@ -100,7 +102,7 @@ public class Log {
      * Display all the logs on the console
      */
     public static void displayAllLogs() {
-        System.out.println("\n\n# LOGS ----------------------------------------");
+        System.out.println("\n\n# LOGS");
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
     }

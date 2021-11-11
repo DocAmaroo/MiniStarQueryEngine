@@ -84,8 +84,10 @@ final class Main {
 		System.out.println("# Parsing data ----------------------------------------");
 		parseData();
 
-		System.out.println("# Parsing queries ----------------------------------------");
-		parseQueries();
+		//System.out.println("# Parsing queries ----------------------------------------");
+		//parseQueries();
+
+		indexation.displayIndexByName("sop");
 
 		// Display on the console and save the logs
 		Log.save();
@@ -232,7 +234,7 @@ final class Main {
 			DictionaryRDFHandler dictionaryRDFHandler = new DictionaryRDFHandler();
 			rdfParser.setRDFHandler(dictionaryRDFHandler);
 
-			startTimer = Utils.getCurrentTime();
+			startTimer = System.currentTimeMillis();
 			rdfParser.parse(dataReader, baseURI);
 
 			endTimer = System.currentTimeMillis() - startTimer;
@@ -248,7 +250,7 @@ final class Main {
 			IndexationRDFHandler indexationRDFHandler = new IndexationRDFHandler();
 			rdfParser.setRDFHandler(indexationRDFHandler);
 
-			startTimer = Utils.getCurrentTime();
+			startTimer = System.currentTimeMillis();
 			rdfParser.parse(dataReader, baseURI);
 
 			endTimer = System.currentTimeMillis() - startTimer;
