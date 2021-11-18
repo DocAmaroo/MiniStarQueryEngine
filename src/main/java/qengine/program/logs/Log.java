@@ -102,7 +102,7 @@ public class Log {
      * Display all the logs on the console
      */
     public static void displayAllLogs() {
-        System.out.println("\n\n# LOGS");
+        System.out.println("\n\n# LOGS " + Utils.HLINE);
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
     }

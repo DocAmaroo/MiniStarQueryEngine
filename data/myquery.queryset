@@ -1,0 +1,7 @@
+SELECT ?v0 WHERE {
+	?v0 <http://schema.org/birthDate> "1988-09-24" . }
+
+SELECT ?v0 WHERE {
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/userId> "9764726" .
+	?v0 <http://schema.org/birthDate> "1988-09-24" . }
+
