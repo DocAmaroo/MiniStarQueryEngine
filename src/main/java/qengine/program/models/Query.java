@@ -5,6 +5,7 @@ import qengine.program.Indexation;
 import qengine.program.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Query {
 
@@ -62,6 +63,11 @@ public class Query {
                     "\n\t- Predicate: " + predicateValue +
                     "\n\t- Object: " + objectValue);
 
+            HashMap<Integer, HashMap<Integer, Integer>> pos = index.getPos();
+
+            HashMap<Integer, Integer> subMap = pos.get(predicateValue);
+            Integer subKey = subMap.get(objectValue);
+            System.out.println(subKey);
 
         }
         System.out.println(Utils.HLINE);
