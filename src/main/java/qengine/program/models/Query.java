@@ -46,6 +46,7 @@ public class Query {
             int predicateValue = dictionary.getWordByValue(clause.getPredicate());
             int objectValue = dictionary.getWordByValue(clause.getObject());
 
+            // Check if we found one for both
             if (predicateValue == -1 || objectValue == -1) {
                 System.err.println("[!] The query below cannot be fetch. The subject or/and predicate or/and object " +
                         "is not in the dictionary");
@@ -60,6 +61,8 @@ public class Query {
             System.out.println("[i] Values: " +
                     "\n\t- Predicate: " + predicateValue +
                     "\n\t- Object: " + objectValue);
+
+
         }
         System.out.println(Utils.HLINE);
     }
