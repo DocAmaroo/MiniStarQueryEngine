@@ -42,7 +42,7 @@ public class Query {
     }
 
     public void fetch(Dictionary dictionary, Indexation index) {
-        System.out.println("[i] Fetching : \n" + toString());
+        System.out.println("\n\n[i] Fetching... \n" + toString());
 
         ArrayList<Integer> keyResults = new ArrayList<>();
 
@@ -52,7 +52,7 @@ public class Query {
 
             // Check if we found a value for both, else no response available
             if (predicateValue == -1 || objectValue == -1) {
-                System.out.println("[i] Cannot found a response to this query");
+                System.err.println("[i] Cannot found a response to this query");
                 return;
             }
 
@@ -62,9 +62,18 @@ public class Query {
             HashMap<Integer, ArrayList<Integer>> subMap = pos.get(predicateValue);
             ArrayList<Integer> subjects = subMap.get(objectValue);
 
+            // No subjects found, mean no valid response
+            if (subjects == null) {
+                System.out.println("[i] Cannot found a response to this query");
+                return;
+            }
+
+            // First response receive with the first where condition
             if (keyResults.isEmpty()) {
                 keyResults.addAll(subjects);
             }
+
+            // Else, compare the two arrays and keep the common value
             else {
                 keyResults = subjects.stream()
                         .filter(keyResults::contains)

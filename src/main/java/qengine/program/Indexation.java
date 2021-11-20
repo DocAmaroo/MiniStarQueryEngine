@@ -64,7 +64,7 @@ public class Indexation {
             // If null, means the sub key doesn't exist
             if (values == null) {
                 subHashMap.put(subkey, new ArrayList<>(Arrays.asList(value)));
-            } else {
+            } else if (!values.contains(value)){
                 values.add(value);
             }
         }
