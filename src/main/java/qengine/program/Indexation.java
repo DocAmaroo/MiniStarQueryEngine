@@ -8,12 +8,12 @@ public class Indexation {
 
     private static Indexation instance = new Indexation();
 
-    private HashMap<Integer, HashMap<Integer, Integer>> ops;
-    private HashMap<Integer, HashMap<Integer, Integer>> osp;
-    private HashMap<Integer, HashMap<Integer, Integer>> pos;
-    private HashMap<Integer, HashMap<Integer, Integer>> pso;
-    private HashMap<Integer, HashMap<Integer, Integer>> sop;
-    private HashMap<Integer, HashMap<Integer, Integer>> spo;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> ops;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> osp;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pos;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pso;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> sop;
+    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> spo;
 
     private Indexation() {
         ops = new HashMap<>();
@@ -28,7 +28,7 @@ public class Indexation {
         return instance;
     }
 
-    public HashMap<Integer, HashMap<Integer, Integer>> getPos() {
+    public HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> getPos() {
         return pos;
     }
 
@@ -44,20 +44,29 @@ public class Indexation {
         addToIndex(spo, subject, predicate, object);
     }
 
-    public void addToIndex(HashMap<Integer, HashMap<Integer, Integer>> index, int key, int subkey, int value) {
+    public void addToIndex(HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index, int key, int subkey, int value) {
 
-        // The pattern we navigate throughout looks like: <key <subkey, value>>
-        // ex: sop = <subject <object, predicate>>
+        // The pattern we navigate throughout looks like: <key <subkey, [values...]>>
+        // ex: sop = <subject <object, [predicates...]>>
 
         // Try to get the sub hash map
-        HashMap<Integer, Integer> subHashMap = index.get(key);
+        HashMap<Integer, ArrayList<Integer>> subHashMap = index.get(key);
 
         // If null, means the key doesn't exist
         if (subHashMap == null) {
-            index.put(key, new HashMap<Integer, Integer>() {{ put(subkey, value); }});
+            index.put(key, new HashMap<Integer, ArrayList<Integer>>() {{
+                put(subkey, new ArrayList<>(Arrays.asList(value)));
+            }});
         } else {
+            // Try to get the values
+            ArrayList<Integer> values = subHashMap.get(subkey);
+
             // If null, means the sub key doesn't exist
-            subHashMap.putIfAbsent(subkey, value);
+            if (values == null) {
+                subHashMap.put(subkey, new ArrayList<>(Arrays.asList(value)));
+            } else {
+                values.add(value);
+            }
         }
     }
 
@@ -102,7 +111,7 @@ public class Indexation {
     /**
      * Display all the values contains in an index give
      */
-    public static void displayIndex(HashMap<Integer, HashMap<Integer, Integer>> index) {
+    public static void displayIndex(HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index) {
         Iterator it = index.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();

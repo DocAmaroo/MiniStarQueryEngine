@@ -6,6 +6,7 @@ import qengine.program.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class Query {
 
@@ -43,32 +44,42 @@ public class Query {
     public void fetch(Dictionary dictionary, Indexation index) {
         System.out.println("[i] Fetching : \n" + toString());
 
+        ArrayList<Integer> keyResults = new ArrayList<>();
+
         for (Clause clause : where) {
             int predicateValue = dictionary.getWordByValue(clause.getPredicate());
             int objectValue = dictionary.getWordByValue(clause.getObject());
 
-            // Check if we found one for both
+            // Check if we found a value for both, else no response available
             if (predicateValue == -1 || objectValue == -1) {
-                System.err.println("[!] The query below cannot be fetch. The subject or/and predicate or/and object " +
-                        "is not in the dictionary");
-                System.err.println("[i] Query: \n" + toString());
-                System.err.println("[i] Values: " +
-                        "\n\t- Predicate: " + predicateValue +
-                        "\n\t- Object: " + objectValue);
-                System.err.println(Utils.HLINE);
+                System.out.println("[i] Cannot found a response to this query");
                 return;
             }
 
-            System.out.println("[i] Values: " +
-                    "\n\t- Predicate: " + predicateValue +
-                    "\n\t- Object: " + objectValue);
+            HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pos = index.getPos();
 
-            HashMap<Integer, HashMap<Integer, Integer>> pos = index.getPos();
+            // Search by using pos method
+            HashMap<Integer, ArrayList<Integer>> subMap = pos.get(predicateValue);
+            ArrayList<Integer> subjects = subMap.get(objectValue);
 
-            HashMap<Integer, Integer> subMap = pos.get(predicateValue);
-            Integer subKey = subMap.get(objectValue);
-            System.out.println(subKey);
+            if (keyResults.isEmpty()) {
+                keyResults.addAll(subjects);
+            }
+            else {
+                keyResults = subjects.stream()
+                        .filter(keyResults::contains)
+                        .collect(Collectors.toCollection(ArrayList::new));
 
+                if (keyResults.isEmpty()) {
+                    System.out.println("[i] Cannot found a response to this query");
+                    return;
+                }
+            }
+        }
+
+        System.out.println("[i] Query response:");
+        for (int key : keyResults) {
+            System.out.println("\t* " + dictionary.getWordByKey(key));
         }
         System.out.println(Utils.HLINE);
     }
