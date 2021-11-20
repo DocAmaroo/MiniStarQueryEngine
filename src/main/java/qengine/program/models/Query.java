@@ -2,6 +2,7 @@ package qengine.program.models;
 
 import qengine.program.Dictionary;
 import qengine.program.Indexation;
+import qengine.program.logs.Log;
 import qengine.program.utils.Utils;
 
 import java.util.ArrayList;
@@ -42,7 +43,12 @@ public class Query {
     }
 
     public void fetch(Dictionary dictionary, Indexation index) {
-        System.out.println("\n\n[i] Fetching... \n" + toString());
+
+        // For verbose only
+        StringBuilder strBuilder = new StringBuilder();
+        strBuilder.append("\n[i] Fetching... \n").append(toString());
+
+        boolean errFlag = false;
 
         ArrayList<Integer> keyResults = new ArrayList<>();
 
@@ -52,8 +58,8 @@ public class Query {
 
             // Check if we found a value for both, else no response available
             if (predicateValue == -1 || objectValue == -1) {
-                System.err.println("[i] Cannot found a response to this query");
-                return;
+                errFlag = true;
+                break;
             }
 
             HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pos = index.getPos();
@@ -64,8 +70,8 @@ public class Query {
 
             // No subjects found, mean no valid response
             if (subjects == null) {
-                System.out.println("[i] Cannot found a response to this query");
-                return;
+                errFlag = true;
+                break;
             }
 
             // First response receive with the first where condition
@@ -80,17 +86,24 @@ public class Query {
                         .collect(Collectors.toCollection(ArrayList::new));
 
                 if (keyResults.isEmpty()) {
-                    System.out.println("[i] Cannot found a response to this query");
-                    return;
+                    errFlag = true;
+                    break;
                 }
             }
         }
 
-        System.out.println("[i] Query response:");
-        for (int key : keyResults) {
-            System.out.println("\t* " + dictionary.getWordByKey(key));
+        if (errFlag || keyResults.isEmpty()) {
+            strBuilder.append("[i] Cannot found a response to this query");
         }
-        System.out.println(Utils.HLINE);
+        else {
+            strBuilder.append("[i] Query response:");
+            for (int key : keyResults) {
+                strBuilder.append("\t* ").append(dictionary.getWordByKey(key));
+            }
+        }
+
+        strBuilder.append(Utils.HLINE);
+        if (Log.isVerbose) System.out.println(strBuilder.toString());
     }
 
     @Override

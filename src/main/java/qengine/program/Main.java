@@ -78,6 +78,9 @@ final class Main {
 	 */
 	private static void parseData() throws FileNotFoundException, IOException {
 
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+
 		// Utiliser pour stocker le temps de départ et de fin d'évaluation
 		long startTimer;
 		long endTimer;
@@ -93,7 +96,7 @@ final class Main {
 			rdfParser.parse(dataReader, baseURI);
 
 			endTimer = System.currentTimeMillis() - startTimer;
-			System.out.println("[+] Dictionary done! ("+endTimer+"ms)");
+			strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
 			Log.setExecTimeDictionary(endTimer);
 		}
 		// --------------------------------------------------------------------------------
@@ -109,7 +112,7 @@ final class Main {
 			rdfParser.parse(dataReader, baseURI);
 
 			endTimer = System.currentTimeMillis() - startTimer;
-			System.out.println("[+] Indexation done! ("+endTimer+"ms)");
+			strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
 			Log.setExecTimeIndexation(endTimer);
 		}
 		// --------------------------------------------------------------------------------
@@ -210,15 +213,19 @@ final class Main {
 
 			// If an option is found
 			if (args[i].startsWith("-")) {
-
 				String optionName = args[i];
-				String optionValue = args[i+1];
 
-				// Check the next value
-				optionValue = checkOptionValue(optionName, optionValue);
-				applyArgument(optionName, optionValue);
+				if (optionName.equals("-verbose")) {
+					applyArgument(optionName, "");
+				} else {
 
-				i++;
+					String optionValue = args[i+1];
+
+					// Check the next value
+					optionValue = checkOptionValue(optionName, optionValue);
+					applyArgument(optionName, optionValue);
+					i++;
+				}
 			}
 		}
 
@@ -243,6 +250,9 @@ final class Main {
 				break;
 			case "-output":
 				Log.setFOLDER(value);
+				break;
+			case "-verbose":
+				Log.setIsVerbose(true);
 				break;
 		}
 	}
@@ -269,6 +279,7 @@ final class Main {
 		System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
 		System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
 		System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
+		System.out.println("\t -verbose --> print during execution process information on the console.");
 		System.out.println("\n[i] Usage example");
 		System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
 		System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");

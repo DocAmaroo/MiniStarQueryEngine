@@ -7,6 +7,8 @@ import java.io.*;
 
 public class Log {
 
+    public static boolean isVerbose = false;
+
     /**
      * Output configuration
      */
@@ -64,6 +66,10 @@ public class Log {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void setIsVerbose(boolean isVerbose) {
+        Log.isVerbose = isVerbose;
     }
 
     public static void setFOLDER(String FOLDER) throws IOException {

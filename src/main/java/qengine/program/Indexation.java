@@ -8,19 +8,19 @@ public class Indexation {
 
     private static Indexation instance = new Indexation();
 
-    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> ops;
-    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> osp;
+    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> ops;
+    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> osp;
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pos;
-    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pso;
-    private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> sop;
+    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pso;
+    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> sop;
     private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> spo;
 
     private Indexation() {
-        ops = new HashMap<>();
-        osp = new HashMap<>();
+        // ops = new HashMap<>();
+        // osp = new HashMap<>();
         pos = new HashMap<>();
-        pso = new HashMap<>();
-        sop = new HashMap<>();
+        // pso = new HashMap<>();
+        // sop = new HashMap<>();
         spo = new HashMap<>();
     }
 
@@ -36,12 +36,12 @@ public class Indexation {
      * Add to all index, at the correct format needed
      */
     public void addToAllIndex(int subject, int predicate, int object) {
-        addToIndex(ops, object, predicate, subject);
-        addToIndex(osp, object, subject, predicate);
+        // addToIndex(ops, object, predicate, subject);
+        // addToIndex(osp, object, subject, predicate);
         addToIndex(pos, predicate, object, subject);
-        addToIndex(pso, predicate, subject, object);
-        addToIndex(sop, subject, object, predicate);
-        addToIndex(spo, subject, predicate, object);
+        // addToIndex(pso, predicate, subject, object);
+        //addToIndex(sop, subject, object, predicate);
+         addToIndex(spo, subject, predicate, object);
     }
 
     public void addToIndex(HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> index, int key, int subkey, int value) {
@@ -73,34 +73,30 @@ public class Indexation {
     /**
      * Choose one the name below to display the index you need:
      * <ul>
-     *    <li>{@link #sop}</li>
-     *    <li>{@link #pso}</li>
-     *    <li>{@link #ops}</li>
-     *    <li>{@link #spo}</li>
      *    <li>{@link #pos}</li>
-     *    <li>{@link #osp}</li>
+     *    <li>{@link #spo}</li>
      * </ul>
      */
     public void displayIndexByName(String indexName) {
         System.out.println("\n[i] DISPLAY INDEX " + indexName.toUpperCase());
         switch (indexName) {
-            case "sop":
-                displayIndex(sop);
-                break;
-            case "pso":
-                displayIndex(pso);
-                break;
-            case "ops":
-                displayIndex(ops);
-                break;
-            case "spo":
-                displayIndex(spo);
-                break;
+//            case "ops":
+//                displayIndex(ops);
+//                break;
+//            case "osp":
+//                displayIndex(osp);
+//                break;
             case "pos":
                 displayIndex(pos);
                 break;
-            case "osp":
-                displayIndex(osp);
+//            case "pso":
+//                displayIndex(pso);
+//                break;
+//            case "sop":
+//                displayIndex(sop);
+//                break;
+            case "spo":
+                displayIndex(spo);
                 break;
             default:
                 System.out.println("[!] Cannot display this index | name give: " + indexName);
