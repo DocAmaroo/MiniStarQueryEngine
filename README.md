@@ -22,7 +22,7 @@ cd MiniStarQueryEngine
 
 ### JAR
 
-⚠️ Ayant eu des soucis à l'exportation de notre projet en `.jar` il est pour l'instant impossible de passer par cette étape.
+⚠️ The export of our project in .jar is currently unavailable. It is currently impossible to go through this step.
 
 ### Alternative
 

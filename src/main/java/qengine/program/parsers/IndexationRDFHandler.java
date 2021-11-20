@@ -21,7 +21,7 @@ public final class IndexationRDFHandler extends AbstractRDFHandler {
         //System.out.println("[i] Statement: " + st.getSubject() + "\t " + st.getPredicate() + "\t " + st.getObject());
 
         int subjectKey = dictionary.getWordByValue(st.getSubject().stringValue());
-        int predicateKey = dictionary.getPredicateByValue(st.getPredicate().stringValue());
+        int predicateKey = dictionary.getWordByValue(st.getPredicate().stringValue());
         int objectKey = dictionary.getWordByValue(st.getObject().stringValue());
 
         indexation.addToAllIndex(subjectKey, predicateKey, objectKey);

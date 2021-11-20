@@ -18,7 +18,7 @@ public final class DictionaryRDFHandler extends AbstractRDFHandler {
 		// System.out.println("[i] Statement: " + st.getSubject() + "\t " + st.getPredicate() + "\t " + st.getObject());
 
 		dictionary.addWord(st.getSubject().stringValue());
-		dictionary.addPredicate(st.getPredicate().stringValue());
+		dictionary.addWord(st.getPredicate().stringValue());
 		dictionary.addWord(st.getObject().stringValue());
 	};
 }
