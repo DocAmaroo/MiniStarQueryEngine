@@ -81,9 +81,7 @@ public class Query {
 
             // Else, compare the two arrays and keep the common value
             else {
-                keyResults = subjects.stream()
-                        .filter(keyResults::contains)
-                        .collect(Collectors.toCollection(ArrayList::new));
+                keyResults.retainAll(subjects);
 
                 if (keyResults.isEmpty()) {
                     errFlag = true;
@@ -93,16 +91,16 @@ public class Query {
         }
 
         if (errFlag || keyResults.isEmpty()) {
-            strBuilder.append("[i] Cannot found a response to this query");
+            strBuilder.append("\n[i] Cannot found a response to this query");
         }
         else {
-            strBuilder.append("[i] Query response:");
+            strBuilder.append("\n[i] Query response:");
             for (int key : keyResults) {
-                strBuilder.append("\t* ").append(dictionary.getWordByKey(key));
+                strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
             }
         }
 
-        strBuilder.append(Utils.HLINE);
+        strBuilder.append("\n").append(Utils.HLINE);
         if (Log.isVerbose) System.out.println(strBuilder.toString());
     }
 

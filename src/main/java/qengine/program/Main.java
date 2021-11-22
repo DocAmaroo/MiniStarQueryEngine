@@ -19,6 +19,7 @@ import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import qengine.program.logs.Log;
 import qengine.program.models.Query;
 import qengine.program.models.Clause;
@@ -86,38 +87,34 @@ final class Main {
 		long endTimer;
 
 		// Mise en place du dictionnaire --------------------------------------------------
-		try (Reader dataReader = new FileReader(dataFile)) {
-			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
-
-			DictionaryRDFHandler dictionaryRDFHandler = new DictionaryRDFHandler();
-			rdfParser.setRDFHandler(dictionaryRDFHandler);
-
-			startTimer = System.currentTimeMillis();
-			rdfParser.parse(dataReader, baseURI);
-
-			endTimer = System.currentTimeMillis() - startTimer;
-			strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
-			Log.setExecTimeDictionary(endTimer);
-		}
+		startTimer = System.currentTimeMillis();
+		parse(new DictionaryRDFHandler());
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
+		Log.setExecTimeDictionary(endTimer);
 		// --------------------------------------------------------------------------------
 
 		// Mise en place de l'indexation --------------------------------------------------
-		try (Reader dataReader = new FileReader(dataFile)) {
-			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
-
-			IndexationRDFHandler indexationRDFHandler = new IndexationRDFHandler();
-			rdfParser.setRDFHandler(indexationRDFHandler);
-
-			startTimer = System.currentTimeMillis();
-			rdfParser.parse(dataReader, baseURI);
-
-			endTimer = System.currentTimeMillis() - startTimer;
-			strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
-			Log.setExecTimeIndexation(endTimer);
-		}
+		startTimer = System.currentTimeMillis();
+		parse(new IndexationRDFHandler());
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
+		Log.setExecTimeIndexation(endTimer);
 		// --------------------------------------------------------------------------------
 	}
 
+	private static void parse(AbstractRDFHandler abstractRDFHandler) throws FileNotFoundException, IOException {
+		try (Reader dataReader = new FileReader(dataFile)) {
+			// On va parser des données au format ntriples
+			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
+
+			// On utilise notre implémentation de handler
+			rdfParser.setRDFHandler(abstractRDFHandler);
+
+			// Parsing et traitement de chaque triple par le handler
+			rdfParser.parse(dataReader, baseURI);
+		}
+	}
 
 	/**
 	 * Traite chaque requête lue dans {@link #queryFile} avec {@link #processAQuery(ParsedQuery)}.
