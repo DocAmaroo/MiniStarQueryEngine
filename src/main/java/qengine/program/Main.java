@@ -3,10 +3,7 @@ package qengine.program;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.eclipse.rdf4j.query.algebra.Projection;
@@ -59,13 +56,25 @@ final class Main {
 	 * Entrée du programme
 	 */
 	public static void main(String[] args) throws Exception {
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+
+		// Utiliser pour stocker le temps de départ et de fin d'évaluation
+		long startTimer;
+		long endTimer;
+
 		handleArguments(args);
 
 		System.out.println("# Parsing data " + Utils.HLINE);
 		parseData();
 
 		System.out.println("# Parsing queries " + Utils.HLINE);
+
+		startTimer = System.currentTimeMillis();
 		parseQueries();
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
+		Log.setExecTimeQuery(endTimer);
 
 		// Display on the console and save the logs
 		Log.save();
@@ -174,9 +183,9 @@ final class Main {
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
 
-		ArrayList<Integer> response = q.fetch(dictionary, indexation);
+		TreeSet<Integer> response = q.fetch(dictionary, indexation);
 
-		if (response.isEmpty()) {
+		if (response == null || response.isEmpty()) {
 			strBuilder.append("\n[i] Cannot found a response to this query");
 		}
 		else {

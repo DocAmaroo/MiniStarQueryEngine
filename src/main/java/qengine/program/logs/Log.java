@@ -32,14 +32,20 @@ public class Log {
     static PrintWriter OUTPUT_FILE;
 
     /**
-     * The execution time for te dictionary instantiation, by default is -1
+     * The execution time for the dictionary instantiation, by default is -1
      */
     public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary");;
 
     /**
-     * The execution time for te indexation instantiation, by default is -1
+     * The execution time for the indexation instantiation, by default is -1
      */
     public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation");
+
+    /**
+     * The execution time for the query evaluation, by default is -1
+     */
+    public static ExecutionTime EXEC_TIME_QUERY = new ExecutionTime("Query");
+
 
     /**
      * Default value if the data value is not available
@@ -83,6 +89,10 @@ public class Log {
     public static void setExecTimeIndexation(long execTimeIndexation) {
         EXEC_TIME_INDEXATION.setValue(execTimeIndexation);
     }
+
+    public static void setExecTimeQuery(long execTimeQuery) {
+        EXEC_TIME_QUERY.setValue(execTimeQuery);
+    }
     // ----------------------------------------------------------------------
 
     /**
@@ -94,6 +104,7 @@ public class Log {
         OUTPUT_FILE.println(csvHeader());
         OUTPUT_FILE.println(EXEC_TIME_DICTIONARY.toCSV());
         OUTPUT_FILE.println(EXEC_TIME_INDEXATION.toCSV());
+        OUTPUT_FILE.println(EXEC_TIME_QUERY.toCSV());
 
         System.out.println("\n[+] Logs have been successfully saved on: " + getOutputPath());
         Utils.displayHLINE();
@@ -111,6 +122,7 @@ public class Log {
         System.out.println("\n\n# LOGS " + Utils.HLINE);
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
+        System.out.println(EXEC_TIME_QUERY);
     }
 
     /**
