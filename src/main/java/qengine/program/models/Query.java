@@ -1,5 +1,6 @@
 package qengine.program.models;
 
+import org.apache.jena.tdb.index.Index;
 import qengine.program.Dictionary;
 import qengine.program.Indexation;
 import qengine.program.logs.Log;
@@ -7,14 +8,12 @@ import qengine.program.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 
 public class Query {
 
     private String select;
-    ArrayList<Clause> where;
-
-    private String sourceString;
+    private ArrayList<Clause> where;
 
     public Query() {
         this.select = "";
@@ -38,70 +37,120 @@ public class Query {
         this.where.add(whereClause);
     }
 
-    public void setSourceString(String sourceString) {
-        this.sourceString = sourceString;
-    }
-
-    public void fetch(Dictionary dictionary, Indexation index) {
-
-        // For verbose only
-        StringBuilder strBuilder = new StringBuilder();
-        strBuilder.append("\n[i] Fetching... \n").append(toString());
+    public ArrayList<Integer> fetch(Dictionary dictionary, Indexation index) {
 
         boolean errFlag = false;
 
-        ArrayList<Integer> keyResults = new ArrayList<>();
+        // The subjects to return
+        ArrayList<Integer> subjects = new ArrayList<>();
 
+        // We go through the clauses
         for (Clause clause : where) {
-            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
-            int objectValue = dictionary.getWordByValue(clause.getObject());
 
-            // Check if we found a value for both, else no response available
-            if (predicateValue == -1 || objectValue == -1) {
+            // Retrieve predicate and object id from the dictionary
+            int predValue = dictionary.getWordByValue(clause.getPredicate());
+            int objValue = dictionary.getWordByValue(clause.getObject());
+
+            // Check if we found a value for both value, else no response available
+            if (predValue == -1 || objValue == -1) {
+                System.err.println("[!] The predicate or the object doesn't exist in the dictionary");
                 errFlag = true;
                 break;
             }
 
-            HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pos = index.getPos();
+            // Get the frequences
+            int predFreq = Indexation.frequences.get(predValue);
+            int objFreq = Indexation.frequences.get(objValue);
 
-            // Search by using pos method
-            HashMap<Integer, ArrayList<Integer>> subMap = pos.get(predicateValue);
-            ArrayList<Integer> subjects = subMap.get(objectValue);
-
-            // No subjects found, mean no valid response
-            if (subjects == null) {
+            // Check if we found a value for both frequency, else no response available
+            if (predFreq == -1 || objFreq == -1) {
+                System.err.println("[!] No frequency found for the predicate or the object give");
                 errFlag = true;
                 break;
             }
 
-            // First response receive with the first where condition
-            if (keyResults.isEmpty()) {
-                keyResults.addAll(subjects);
-            }
 
-            // Else, compare the two arrays and keep the common value
+            TreeSet<Integer> subjectsFound;
+
+            // if predicate frequency is lower or equal to the object we use the POS method
+            // else use te OPS method
+            if (predFreq <= objFreq) {
+                subjectsFound = Indexation.pos.get(predValue).get(objValue);
+            }
             else {
-                keyResults.retainAll(subjects);
+                subjectsFound = Indexation.ops.get(objValue).get(predValue);
+            }
 
-                if (keyResults.isEmpty()) {
-                    errFlag = true;
-                    break;
+            // No more subjects to found, then we can leave
+            if (subjectsFound == null) {
+                break;
+            } else {
+                if (subjects.isEmpty()) {
+                    subjects.addAll(subjectsFound);
+                } else {
+                    subjects.retainAll(subjectsFound);
                 }
             }
         }
 
-        if (errFlag || keyResults.isEmpty()) {
-            strBuilder.append("\n[i] Cannot found a response to this query");
+        if (errFlag) {
+            return null;
         }
         else {
-            strBuilder.append("\n[i] Query response:");
-            for (int key : keyResults) {
-                strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
+            return subjects;
+        }
+    }
+
+    public void mergeJoin(Dictionary dictionary, Indexation indexation) {
+        ArrayList<TreeSet<Integer>> responses = new ArrayList<>();
+        boolean errFlag = false;
+
+        // We go through the clauses
+        for (Clause clause : where) {
+
+            // Retrieve predicate and object id from the dictionary
+            int predValue = dictionary.getWordByValue(clause.getPredicate());
+            int objValue = dictionary.getWordByValue(clause.getObject());
+
+            // Check if we found a value for both value, else no response available
+            if (predValue == -1 || objValue == -1) {
+                System.err.println("[!] The predicate or the object doesn't exist in the dictionary");
+                errFlag = true;
+                break;
+            }
+
+            // Get the frequences
+            int predFreq = Indexation.frequences.get(predValue);
+            int objFreq = Indexation.frequences.get(objValue);
+
+            // Check if we found a value for both frequency, else no response available
+            if (predFreq == -1 || objFreq == -1) {
+                System.err.println("[!] No frequency found for the predicate or the object give");
+                errFlag = true;
+                break;
+            }
+
+
+            TreeSet<Integer> subjectsFound;
+
+            // if predicate frequency is lower or equal to the object we use the POS method
+            // else use te OPS method
+            if (predFreq <= objFreq) {
+                subjectsFound = Indexation.pos.get(predValue).get(objValue);
+            }
+            else {
+                subjectsFound = Indexation.ops.get(objValue).get(predValue);
+            }
+
+            // No more subjects to found, then we can leave
+            if (subjectsFound == null) {
+                break;
+            } else {
+                responses.add(subjectsFound);
             }
         }
 
-        strBuilder.append("\n").append(Utils.HLINE);
-        if (Log.isVerbose) System.out.println(strBuilder.toString());
+
     }
 
     @Override

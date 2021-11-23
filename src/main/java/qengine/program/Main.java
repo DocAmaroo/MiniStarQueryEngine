@@ -158,7 +158,6 @@ final class Main {
 	 */
 	public static void processAQuery(ParsedQuery query) {
 		Query q = new Query();
-		q.setSourceString(query.getSourceString());
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
 
@@ -171,7 +170,24 @@ final class Main {
 			q.addWhereClause(whereClause);
 		}
 
-		q.fetch(dictionary, indexation);
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
+
+		ArrayList<Integer> response = q.fetch(dictionary, indexation);
+
+		if (response.isEmpty()) {
+			strBuilder.append("\n[i] Cannot found a response to this query");
+		}
+		else {
+			strBuilder.append("\n[i] Query response:");
+			for (int key : response) {
+				strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
+			}
+		}
+
+		strBuilder.append("\n").append(Utils.HLINE);
+		if (Log.isVerbose) System.out.println(strBuilder.toString());
 
 
 //		System.out.println("variables to project : ");
