@@ -31,20 +31,14 @@ public class Log {
     static BufferedWriter BUFFERED_WRITER;
     static PrintWriter OUTPUT_FILE;
 
-    /**
-     * The execution time for the dictionary instantiation, by default is -1
-     */
-    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary");;
 
     /**
-     * The execution time for the indexation instantiation, by default is -1
+     * EXECUTION TIMER
      */
+    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary");
     public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation");
-
-    /**
-     * The execution time for the query evaluation, by default is -1
-     */
     public static ExecutionTime EXEC_TIME_QUERY = new ExecutionTime("Query");
+    public static ExecutionTime EXEC_TIME_MAIN = new ExecutionTime("Main");
 
 
     /**
@@ -93,6 +87,14 @@ public class Log {
     public static void setExecTimeQuery(long execTimeQuery) {
         EXEC_TIME_QUERY.setValue(execTimeQuery);
     }
+
+    public static void setExecTimeMain(long execTimeMain) {
+        EXEC_TIME_MAIN.setValue(execTimeMain);
+    }
+
+    public static void write(String text) {
+        OUTPUT_FILE.println(text);
+    }
     // ----------------------------------------------------------------------
 
     /**
@@ -101,10 +103,11 @@ public class Log {
     public static void save() throws IOException {
         displayAllLogs();
 
-        OUTPUT_FILE.println(csvHeader());
-        OUTPUT_FILE.println(EXEC_TIME_DICTIONARY.toCSV());
-        OUTPUT_FILE.println(EXEC_TIME_INDEXATION.toCSV());
-        OUTPUT_FILE.println(EXEC_TIME_QUERY.toCSV());
+        write(csvHeader());
+        write(EXEC_TIME_DICTIONARY.toCSV());
+        write(EXEC_TIME_INDEXATION.toCSV());
+        write(EXEC_TIME_QUERY.toCSV());
+        write(EXEC_TIME_MAIN.toCSV());
 
         System.out.println("\n[+] Logs have been successfully saved on: " + getOutputPath());
         Utils.displayHLINE();
@@ -112,7 +115,7 @@ public class Log {
     }
 
     public static String csvHeader() {
-        return "Type,Key,Value";
+        return "Type,Key,Value,Description";
     }
 
     /**
@@ -123,6 +126,7 @@ public class Log {
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
         System.out.println(EXEC_TIME_QUERY);
+        System.out.println(EXEC_TIME_MAIN);
     }
 
     /**

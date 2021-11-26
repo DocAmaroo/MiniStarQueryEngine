@@ -17,30 +17,20 @@ public class ExecutionTime {
         this.value = value;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public long getValue() {
-        return value;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public void setValue(long value) {
         this.value = value;
     }
 
+    public long toSecond() { return this.value * 1000; }
+
     @Override
     public String toString() {
         return "[i] EXECUTION TIME | " + name + ": " +
-                (value != -1 ? value + "ms" : Log.UNAVAILABLE);
+                (value != -1 ? toSecond() + "s" : Log.UNAVAILABLE);
     }
 
     public String toCSV() {
         String type = "EXECUTION TIME";
-        return type + "," + name + "," + value + "ms";
+        return type + "," + name + "," + toSecond() + "s";
     }
 }
