@@ -3,10 +3,7 @@ package qengine.program;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.eclipse.rdf4j.query.algebra.Projection;
@@ -59,13 +56,25 @@ final class Main {
 	 * Entrée du programme
 	 */
 	public static void main(String[] args) throws Exception {
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+
+		// Utiliser pour stocker le temps de départ et de fin d'évaluation
+		long startTimer;
+		long endTimer;
+
 		handleArguments(args);
 
 		System.out.println("# Parsing data " + Utils.HLINE);
 		parseData();
 
 		System.out.println("# Parsing queries " + Utils.HLINE);
+
+		startTimer = System.currentTimeMillis();
 		parseQueries();
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
+		Log.setExecTimeQuery(endTimer);
 
 		// Display on the console and save the logs
 		Log.save();
@@ -158,7 +167,6 @@ final class Main {
 	 */
 	public static void processAQuery(ParsedQuery query) {
 		Query q = new Query();
-		q.setSourceString(query.getSourceString());
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
 
@@ -171,7 +179,24 @@ final class Main {
 			q.addWhereClause(whereClause);
 		}
 
-		q.fetch(dictionary, indexation);
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
+
+		TreeSet<Integer> response = q.fetch(dictionary, indexation);
+
+		if (response == null || response.isEmpty()) {
+			strBuilder.append("\n[i] Cannot found a response to this query");
+		}
+		else {
+			strBuilder.append("\n[i] Query response:");
+			for (int key : response) {
+				strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
+			}
+		}
+
+		strBuilder.append("\n").append(Utils.HLINE);
+		if (Log.isVerbose) System.out.println(strBuilder.toString());
 
 
 //		System.out.println("variables to project : ");
