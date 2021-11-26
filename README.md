@@ -34,15 +34,15 @@ cd MiniStarQueryEngine
 * `-queries` <path/to/file> &rarr; absolute path to the queries file, or the relative from a working directory specified;
 * `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified;
 * `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output;
-
+* `-verbose` &rarr; Display all information on the console.
 
 <details><summary>See usage sample</summary>
 <br/>
 
 The two samples below or equivalent.
 
-`-data ~/data/sample_data.nt -queries ~/data/sample_query.queryset;`
+`-data ~/data/sample_data.nt -queries ~/data/sample_query.queryset -verbose`
 
-`-workingDir ~/data -data sample_data.nt -queries sample_query.queryset;`
+`-workingDir ~/data -data sample_data.nt -queries sample_query.queryset -verbose`
 
 </details><br/>
