@@ -35,7 +35,7 @@ final class Main {
 	/**
 	 * Nom du fichier contenant les requêtes
 	 */
-	private static String queryFilename = "";
+	public static String queryFilename = "";
 
 	/**
 	 * Chemin du fichier contenant les requêtes sparql
@@ -45,12 +45,12 @@ final class Main {
 	/**
 	 * Fichier contenant des données rdf
 	 */
-	private static String dataFilename = "";
+	public static String dataFilename = "";
 
 	/**
 	 * Chemin du fichier contenant les données
 	 */
-	public static String dataFilePath;
+	private static String dataFilePath;
 
 
 	/**
@@ -279,12 +279,15 @@ final class Main {
 		switch (option) {
 			case "-workingDir":
 				workingDir = value;
+				Log.setWorkingDirectory(workingDir);
 				break;
 			case "-queries":
 				queryFilename = value;
+				Log.setQueryFileName(queryFilename);
 				break;
 			case "-data":
 				dataFilename = value;
+				Log.setDataFileName(dataFilename);
 				break;
 			case "-output":
 				Log.setFOLDER(value);

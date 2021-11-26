@@ -33,12 +33,19 @@ public class Log {
 
 
     /**
+     * FILE && DIRECTORY
+     */
+    public static String dataFileName;
+    public static String queryFileName;
+    public static String workingDirectory;
+
+    /**
      * EXECUTION TIMER
      */
-    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary");
-    public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation");
-    public static ExecutionTime EXEC_TIME_QUERY = new ExecutionTime("Query");
-    public static ExecutionTime EXEC_TIME_MAIN = new ExecutionTime("Main");
+    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary", "Execution time to instantiate the dictionary");
+    public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation", "Execution time to instantiate indexes");
+    public static ExecutionTime EXEC_TIME_QUERY = new ExecutionTime("Query", "Execution time to evaluate queries");
+    public static ExecutionTime EXEC_TIME_MAIN = new ExecutionTime("Main", "Execution time of the main program");
 
 
     /**
@@ -76,6 +83,18 @@ public class Log {
         Log.FOLDER = FOLDER;
     }
 
+    public static void setDataFileName(String dataFileName) {
+        Log.dataFileName = dataFileName;
+    }
+
+    public static void setQueryFileName(String queryFileName) {
+        Log.queryFileName = queryFileName;
+    }
+
+    public static void setWorkingDirectory(String workingDirectory) {
+        Log.workingDirectory = workingDirectory;
+    }
+
     public static void setExecTimeDictionary(long execTimeDictionary) {
         EXEC_TIME_DICTIONARY.setValue(execTimeDictionary);
     }
@@ -104,6 +123,10 @@ public class Log {
         displayAllLogs();
 
         write(csvHeader());
+        write("FILE,DATA,"+dataFileName+",Name of the data file");
+        write("FILE,QUERY,"+queryFileName+",Name of the query file");
+        if (workingDirectory != null)
+            write("FILE,WORKING DIRECTORY,"+queryFileName+", The path to the working directory");
         write(EXEC_TIME_DICTIONARY.toCSV());
         write(EXEC_TIME_INDEXATION.toCSV());
         write(EXEC_TIME_QUERY.toCSV());

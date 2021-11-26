@@ -6,15 +6,16 @@ public class ExecutionTime {
 
     private String name;
     private long value;
+    private String description;
 
     public ExecutionTime(String name) {
         this.name = name;
         this.value = -1;
     }
 
-    public ExecutionTime(String name, long value) {
+    public ExecutionTime(String name, String description) {
         this.name = name;
-        this.value = value;
+        this.description = description;
     }
 
     public void setValue(long value) {
@@ -26,11 +27,11 @@ public class ExecutionTime {
     @Override
     public String toString() {
         return "[i] EXECUTION TIME | " + name + ": " +
-                (value != -1 ? toSecond() + "s" : Log.UNAVAILABLE);
+                (value != -1 ? value + "ms" : Log.UNAVAILABLE);
     }
 
     public String toCSV() {
         String type = "EXECUTION TIME";
-        return type + "," + name + "," + toSecond() + "s";
+        return type + "," + name + "," + value + "ms," + description;
     }
 }
