@@ -6,10 +6,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.eclipse.rdf4j.query.algebra.Projection;
-import org.eclipse.rdf4j.query.algebra.ProjectionElem;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
-import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 import org.eclipse.rdf4j.query.algebra.helpers.StatementPatternCollector;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
@@ -28,34 +25,47 @@ import qengine.program.utils.Utils;
 import static java.lang.System.exit;
 
 final class Main {
-	static final String baseURI = null;
-	static String queryFilename = "";
-	static String dataFilename = "";
+	private static final String baseURI = null;
 
 	/**
 	 * Votre répertoire de travail où vont se trouver les fichiers à lire
 	 */
-	static String workingDir = "";
+	public static String workingDir = "";
 
 	/**
-	 * Fichier contenant les requêtes sparql
+	 * Nom du fichier contenant les requêtes
 	 */
-	static String queryFile;
+	public static String queryFilename = "";
+
+	/**
+	 * Chemin du fichier contenant les requêtes sparql
+	 */
+	private static String queryFilePath;
 
 	/**
 	 * Fichier contenant des données rdf
 	 */
-	static String dataFile;
+	public static String dataFilename = "";
 
-	static final Dictionary dictionary = Dictionary.getInstance();
+	/**
+	 * Chemin du fichier contenant les données
+	 */
+	private static String dataFilePath;
 
-	static final Indexation indexation = Indexation.getInstance();
+
+	/**
+	 * Instance of the dictionary and the indexes
+	 */
+	private static final Dictionary dictionary = Dictionary.getInstance();
+	private static final Indexation indexation = Indexation.getInstance();
 	// ========================================================================
 
 	/**
 	 * Entrée du programme
 	 */
 	public static void main(String[] args) throws Exception {
+		long mainExecutionTime = System.currentTimeMillis();
+
 		// For verbose only
 		StringBuilder strBuilder = new StringBuilder();
 
@@ -76,15 +86,21 @@ final class Main {
 		strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
 		Log.setExecTimeQuery(endTimer);
 
+
+		// Logs only
+		mainExecutionTime = System.currentTimeMillis() - mainExecutionTime;
+		Log.setExecTimeMain(mainExecutionTime);
+
 		// Display on the console and save the logs
 		Log.save();
+
 	}
 
 	// ========================================================================
 
 
 	/**
-	 * Traite chaque triple lu dans {@link #dataFile} avec {@link MainRDFHandler}.
+	 * Traite chaque triple lu dans {@link #dataFilePath} avec {@link MainRDFHandler}.
 	 */
 	private static void parseData() throws FileNotFoundException, IOException {
 
@@ -113,7 +129,7 @@ final class Main {
 	}
 
 	private static void parse(AbstractRDFHandler abstractRDFHandler) throws FileNotFoundException, IOException {
-		try (Reader dataReader = new FileReader(dataFile)) {
+		try (Reader dataReader = new FileReader(dataFilePath)) {
 			// On va parser des données au format ntriples
 			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
 
@@ -126,7 +142,7 @@ final class Main {
 	}
 
 	/**
-	 * Traite chaque requête lue dans {@link #queryFile} avec {@link #processAQuery(ParsedQuery)}.
+	 * Traite chaque requête lue dans {@link #queryFilePath} avec {@link #processAQuery(ParsedQuery)}.
 	 */
 	private static void parseQueries() throws FileNotFoundException, IOException {
 		/**
@@ -138,7 +154,7 @@ final class Main {
 		 * On utilise un stream pour lire les lignes une par une, sans avoir à toutes les stocker
 		 * entièrement dans une collection.
 		 */
-		try (Stream<String> lineStream = Files.lines(Paths.get(queryFile))) {
+		try (Stream<String> lineStream = Files.lines(Paths.get(queryFilePath))) {
 			SPARQLParser sparqlParser = new SPARQLParser();
 			Iterator<String> lineIterator = lineStream.iterator();
 			StringBuilder queryString = new StringBuilder();
@@ -252,8 +268,8 @@ final class Main {
 		}
 
 		// Set the path to the files
-		queryFile = workingDir + "/" + queryFilename;
-		dataFile = workingDir + "/" + dataFilename;
+		queryFilePath = workingDir + "/" + queryFilename;
+		dataFilePath = workingDir + "/" + dataFilename;
 
 		// Init log writers
 		Log.initFileWriter();
@@ -263,12 +279,15 @@ final class Main {
 		switch (option) {
 			case "-workingDir":
 				workingDir = value;
+				Log.setWorkingDirectory(workingDir);
 				break;
 			case "-queries":
 				queryFilename = value;
+				Log.setQueryFileName(queryFilename);
 				break;
 			case "-data":
 				dataFilename = value;
+				Log.setDataFileName(dataFilename);
 				break;
 			case "-output":
 				Log.setFOLDER(value);
