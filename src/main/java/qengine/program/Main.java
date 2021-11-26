@@ -199,7 +199,7 @@ final class Main {
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
 
-		TreeSet<Integer> response = q.fetch(dictionary, indexation);
+		TreeSet<Integer> response = q.fetch(dictionary);
 
 		if (response == null || response.isEmpty()) {
 			strBuilder.append("\n[i] Cannot found a response to this query");

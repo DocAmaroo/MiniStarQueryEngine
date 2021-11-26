@@ -1,15 +1,9 @@
 package qengine.program.models;
 
-import com.github.andrewoma.dexx.collection.internal.redblack.Tree;
-import org.apache.jena.tdb.index.Index;
-import org.eclipse.rdf4j.query.algebra.In;
 import qengine.program.Dictionary;
 import qengine.program.Indexation;
-import qengine.program.logs.Log;
-import qengine.program.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -40,7 +34,7 @@ public class Query {
         this.where.add(whereClause);
     }
 
-    public TreeSet<Integer> fetch(Dictionary dictionary, Indexation index) {
+    public TreeSet<Integer> fetch(Dictionary dictionary) {
         if (where.size() == 1) {
             return fetchClause(dictionary, where.get(0));
         } else {
@@ -57,7 +51,8 @@ public class Query {
 
         // Check if we found a value for both value, else no response available
         if (predValue == -1 || objValue == -1) {
-            System.err.println("[!] The predicate or the object doesn't exist in the dictionary");
+            // DEBUG ONLY
+            // System.err.println("[!] The predicate or the object doesn't exist in the dictionary");
             return null;
         }
 
@@ -67,7 +62,8 @@ public class Query {
 
         // Check if we found a value for both frequency, else no response available
         if (predFreq == -1 || objFreq == -1) {
-            System.err.println("[!] No frequency found for the predicate or the object give");
+            // DEBUG ONLY
+            // System.err.println("[!] No frequency found for the predicate or the object give");
             return null;
         }
 
@@ -160,3 +156,59 @@ public class Query {
         return "SELECT ?" + select + " WHERE {\n" + whereBuilder.toString() + " }";
     }
 }
+
+
+
+
+
+
+// ------ ARCHIVES
+// NAIVE VERSION OF FETCH
+//    public TreeSet<Integer> fetch(Dictionary dictionary) {
+//
+//        // For verbose only
+//        StringBuilder strBuilder = new StringBuilder();
+//        strBuilder.append("\n[i] Fetching... \n").append(toString());
+//
+//        boolean errFlag = false;
+//
+//        TreeSet<Integer> keyResults = new TreeSet<>();
+//
+//        for (Clause clause : where) {
+//            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
+//            int objectValue = dictionary.getWordByValue(clause.getObject());
+//
+//            // Check if we found a value for both, else no response available
+//            if (predicateValue == -1 || objectValue == -1) {
+//                errFlag = true;
+//                break;
+//            }
+//
+//            // Search by using pos method
+//            TreeMap<Integer, TreeSet<Integer>> subMap = Indexation.pos.get(predicateValue);
+//            TreeSet<Integer> subjects = subMap.get(objectValue);
+//
+//            // No subjects found, mean no valid response
+//            if (subjects == null) {
+//                errFlag = true;
+//                break;
+//            }
+//
+//            // First response receive with the first where condition
+//            if (keyResults.isEmpty()) {
+//                keyResults.addAll(subjects);
+//            }
+//
+//            // Else, compare the two arrays and keep the common value
+//            else {
+//                keyResults.retainAll(subjects);
+//
+//                if (keyResults.isEmpty()) {
+//                    errFlag = true;
+//                    break;
+//                }
+//            }
+//        }
+//
+//        return keyResults;
+//    }

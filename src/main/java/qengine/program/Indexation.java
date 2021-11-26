@@ -11,9 +11,6 @@ public class Indexation {
     public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> ops;
     public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
     public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
-    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> osp;
-    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> pso;
-    // private HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> sop;
 
     public static HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
 
@@ -21,9 +18,7 @@ public class Indexation {
         ops = new TreeMap<>();
         pos = new TreeMap<>();
         spo = new TreeMap<>();
-        // osp = new HashMap<>();
-        // pso = new HashMap<>();
-        // sop = new HashMap<>();
+
         frequences = new HashMap<Integer, Integer>();
     }
 
@@ -46,9 +41,6 @@ public class Indexation {
         addToIndex(ops, object, predicate, subject);
         addToIndex(pos, predicate, object, subject);
         addToIndex(spo, subject, predicate, object);
-        // addToIndex(osp, object, subject, predicate);
-        // addToIndex(pso, predicate, subject, object);
-        //addToIndex(sop, subject, object, predicate);
 
         updFrequency(subject);
         updFrequency(predicate);
@@ -108,15 +100,6 @@ public class Indexation {
             case "spo":
                 displayIndex(spo);
                 break;
-//            case "osp":
-//                displayIndex(osp);
-//                break;
-//            case "pso":
-//                displayIndex(pso);
-//                break;
-//            case "sop":
-//                displayIndex(sop);
-//                break;
             default:
                 System.out.println("[!] Cannot display this index | name give: " + indexName);
         }

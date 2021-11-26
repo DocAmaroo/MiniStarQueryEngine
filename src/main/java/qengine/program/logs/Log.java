@@ -126,7 +126,7 @@ public class Log {
         write("FILE,DATA,"+dataFileName+",Name of the data file");
         write("FILE,QUERY,"+queryFileName+",Name of the query file");
         if (workingDirectory != null)
-            write("FILE,WORKING DIRECTORY,"+queryFileName+", The path to the working directory");
+            write("FILE,WORKING DIRECTORY,"+queryFileName+",The path to the working directory");
         write(EXEC_TIME_DICTIONARY.toCSV());
         write(EXEC_TIME_INDEXATION.toCSV());
         write(EXEC_TIME_QUERY.toCSV());
