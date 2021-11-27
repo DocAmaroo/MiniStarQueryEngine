@@ -7,6 +7,8 @@ import java.io.*;
 
 public class Log {
 
+    public static boolean isVerbose = false;
+
     /**
      * Output configuration
      */
@@ -29,15 +31,22 @@ public class Log {
     static BufferedWriter BUFFERED_WRITER;
     static PrintWriter OUTPUT_FILE;
 
-    /**
-     * The execution time for te dictionary instantiation, by default is -1
-     */
-    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary");;
 
     /**
-     * The execution time for te indexation instantiation, by default is -1
+     * FILE && DIRECTORY
      */
-    public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation");
+    public static String dataFileName;
+    public static String queryFileName;
+    public static String workingDirectory;
+
+    /**
+     * EXECUTION TIMER
+     */
+    public static ExecutionTime EXEC_TIME_DICTIONARY = new ExecutionTime("Dictionary", "Execution time to instantiate the dictionary");
+    public static ExecutionTime EXEC_TIME_INDEXATION = new ExecutionTime("Indexation", "Execution time to instantiate indexes");
+    public static ExecutionTime EXEC_TIME_QUERY = new ExecutionTime("Query", "Execution time to evaluate queries");
+    public static ExecutionTime EXEC_TIME_MAIN = new ExecutionTime("Main", "Execution time of the main program");
+
 
     /**
      * Default value if the data value is not available
@@ -66,8 +75,24 @@ public class Log {
         }
     }
 
+    public static void setIsVerbose(boolean isVerbose) {
+        Log.isVerbose = isVerbose;
+    }
+
     public static void setFOLDER(String FOLDER) throws IOException {
         Log.FOLDER = FOLDER;
+    }
+
+    public static void setDataFileName(String dataFileName) {
+        Log.dataFileName = dataFileName;
+    }
+
+    public static void setQueryFileName(String queryFileName) {
+        Log.queryFileName = queryFileName;
+    }
+
+    public static void setWorkingDirectory(String workingDirectory) {
+        Log.workingDirectory = workingDirectory;
     }
 
     public static void setExecTimeDictionary(long execTimeDictionary) {
@@ -77,6 +102,18 @@ public class Log {
     public static void setExecTimeIndexation(long execTimeIndexation) {
         EXEC_TIME_INDEXATION.setValue(execTimeIndexation);
     }
+
+    public static void setExecTimeQuery(long execTimeQuery) {
+        EXEC_TIME_QUERY.setValue(execTimeQuery);
+    }
+
+    public static void setExecTimeMain(long execTimeMain) {
+        EXEC_TIME_MAIN.setValue(execTimeMain);
+    }
+
+    public static void write(String text) {
+        OUTPUT_FILE.println(text);
+    }
     // ----------------------------------------------------------------------
 
     /**
@@ -85,9 +122,15 @@ public class Log {
     public static void save() throws IOException {
         displayAllLogs();
 
-        OUTPUT_FILE.println(csvHeader());
-        OUTPUT_FILE.println(EXEC_TIME_DICTIONARY.toCSV());
-        OUTPUT_FILE.println(EXEC_TIME_INDEXATION.toCSV());
+        write(csvHeader());
+        write("FILE,DATA,"+dataFileName+",Name of the data file");
+        write("FILE,QUERY,"+queryFileName+",Name of the query file");
+        if (workingDirectory != null)
+            write("FILE,WORKING DIRECTORY,"+queryFileName+",The path to the working directory");
+        write(EXEC_TIME_DICTIONARY.toCSV());
+        write(EXEC_TIME_INDEXATION.toCSV());
+        write(EXEC_TIME_QUERY.toCSV());
+        write(EXEC_TIME_MAIN.toCSV());
 
         System.out.println("\n[+] Logs have been successfully saved on: " + getOutputPath());
         Utils.displayHLINE();
@@ -95,7 +138,7 @@ public class Log {
     }
 
     public static String csvHeader() {
-        return "Type,Key,Value";
+        return "Type,Key,Value,Description";
     }
 
     /**
@@ -105,6 +148,8 @@ public class Log {
         System.out.println("\n\n# LOGS " + Utils.HLINE);
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
+        System.out.println(EXEC_TIME_QUERY);
+        System.out.println(EXEC_TIME_MAIN);
     }
 
     /**

@@ -3,22 +3,17 @@ package qengine.program;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
-import org.eclipse.rdf4j.query.algebra.Projection;
-import org.eclipse.rdf4j.query.algebra.ProjectionElem;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
-import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 import org.eclipse.rdf4j.query.algebra.helpers.StatementPatternCollector;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import qengine.program.logs.Log;
 import qengine.program.models.Query;
 import qengine.program.models.Clause;
@@ -30,94 +25,124 @@ import qengine.program.utils.Utils;
 import static java.lang.System.exit;
 
 final class Main {
-	static final String baseURI = null;
-	static String queryFilename = "";
-	static String dataFilename = "";
+	private static final String baseURI = null;
 
 	/**
 	 * Votre répertoire de travail où vont se trouver les fichiers à lire
 	 */
-	static String workingDir = "";
+	public static String workingDir = "";
 
 	/**
-	 * Fichier contenant les requêtes sparql
+	 * Nom du fichier contenant les requêtes
 	 */
-	static String queryFile;
+	public static String queryFilename = "";
+
+	/**
+	 * Chemin du fichier contenant les requêtes sparql
+	 */
+	private static String queryFilePath;
 
 	/**
 	 * Fichier contenant des données rdf
 	 */
-	static String dataFile;
+	public static String dataFilename = "";
 
-	static final Dictionary dictionary = Dictionary.getInstance();
+	/**
+	 * Chemin du fichier contenant les données
+	 */
+	private static String dataFilePath;
 
-	static final Indexation indexation = Indexation.getInstance();
+
+	/**
+	 * Instance of the dictionary and the indexes
+	 */
+	private static final Dictionary dictionary = Dictionary.getInstance();
+	private static final Indexation indexation = Indexation.getInstance();
 	// ========================================================================
 
 	/**
 	 * Entrée du programme
 	 */
 	public static void main(String[] args) throws Exception {
+		long mainExecutionTime = System.currentTimeMillis();
+
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+
+		// Utiliser pour stocker le temps de départ et de fin d'évaluation
+		long startTimer;
+		long endTimer;
+
 		handleArguments(args);
 
 		System.out.println("# Parsing data " + Utils.HLINE);
 		parseData();
 
 		System.out.println("# Parsing queries " + Utils.HLINE);
+
+		startTimer = System.currentTimeMillis();
 		parseQueries();
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
+		Log.setExecTimeQuery(endTimer);
+
+
+		// Logs only
+		mainExecutionTime = System.currentTimeMillis() - mainExecutionTime;
+		Log.setExecTimeMain(mainExecutionTime);
 
 		// Display on the console and save the logs
 		Log.save();
+
 	}
 
 	// ========================================================================
 
 
 	/**
-	 * Traite chaque triple lu dans {@link #dataFile} avec {@link MainRDFHandler}.
+	 * Traite chaque triple lu dans {@link #dataFilePath} avec {@link MainRDFHandler}.
 	 */
 	private static void parseData() throws FileNotFoundException, IOException {
+
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
 
 		// Utiliser pour stocker le temps de départ et de fin d'évaluation
 		long startTimer;
 		long endTimer;
 
 		// Mise en place du dictionnaire --------------------------------------------------
-		try (Reader dataReader = new FileReader(dataFile)) {
-			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
-
-			DictionaryRDFHandler dictionaryRDFHandler = new DictionaryRDFHandler();
-			rdfParser.setRDFHandler(dictionaryRDFHandler);
-
-			startTimer = System.currentTimeMillis();
-			rdfParser.parse(dataReader, baseURI);
-
-			endTimer = System.currentTimeMillis() - startTimer;
-			System.out.println("[+] Dictionary done! ("+endTimer+"ms)");
-			Log.setExecTimeDictionary(endTimer);
-		}
+		startTimer = System.currentTimeMillis();
+		parse(new DictionaryRDFHandler());
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
+		Log.setExecTimeDictionary(endTimer);
 		// --------------------------------------------------------------------------------
 
 		// Mise en place de l'indexation --------------------------------------------------
-		try (Reader dataReader = new FileReader(dataFile)) {
-			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
-
-			IndexationRDFHandler indexationRDFHandler = new IndexationRDFHandler();
-			rdfParser.setRDFHandler(indexationRDFHandler);
-
-			startTimer = System.currentTimeMillis();
-			rdfParser.parse(dataReader, baseURI);
-
-			endTimer = System.currentTimeMillis() - startTimer;
-			System.out.println("[+] Indexation done! ("+endTimer+"ms)");
-			Log.setExecTimeIndexation(endTimer);
-		}
+		startTimer = System.currentTimeMillis();
+		parse(new IndexationRDFHandler());
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
+		Log.setExecTimeIndexation(endTimer);
 		// --------------------------------------------------------------------------------
 	}
 
+	private static void parse(AbstractRDFHandler abstractRDFHandler) throws FileNotFoundException, IOException {
+		try (Reader dataReader = new FileReader(dataFilePath)) {
+			// On va parser des données au format ntriples
+			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
+
+			// On utilise notre implémentation de handler
+			rdfParser.setRDFHandler(abstractRDFHandler);
+
+			// Parsing et traitement de chaque triple par le handler
+			rdfParser.parse(dataReader, baseURI);
+		}
+	}
 
 	/**
-	 * Traite chaque requête lue dans {@link #queryFile} avec {@link #processAQuery(ParsedQuery)}.
+	 * Traite chaque requête lue dans {@link #queryFilePath} avec {@link #processAQuery(ParsedQuery)}.
 	 */
 	private static void parseQueries() throws FileNotFoundException, IOException {
 		/**
@@ -129,7 +154,7 @@ final class Main {
 		 * On utilise un stream pour lire les lignes une par une, sans avoir à toutes les stocker
 		 * entièrement dans une collection.
 		 */
-		try (Stream<String> lineStream = Files.lines(Paths.get(queryFile))) {
+		try (Stream<String> lineStream = Files.lines(Paths.get(queryFilePath))) {
 			SPARQLParser sparqlParser = new SPARQLParser();
 			Iterator<String> lineIterator = lineStream.iterator();
 			StringBuilder queryString = new StringBuilder();
@@ -158,7 +183,6 @@ final class Main {
 	 */
 	public static void processAQuery(ParsedQuery query) {
 		Query q = new Query();
-		q.setSourceString(query.getSourceString());
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
 
@@ -171,7 +195,24 @@ final class Main {
 			q.addWhereClause(whereClause);
 		}
 
-		q.fetch(dictionary, indexation);
+		// For verbose only
+		StringBuilder strBuilder = new StringBuilder();
+		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
+
+		TreeSet<Integer> response = q.fetch(dictionary);
+
+		if (response == null || response.isEmpty()) {
+			strBuilder.append("\n[i] Cannot found a response to this query");
+		}
+		else {
+			strBuilder.append("\n[i] Query response:");
+			for (int key : response) {
+				strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
+			}
+		}
+
+		strBuilder.append("\n").append(Utils.HLINE);
+		if (Log.isVerbose) System.out.println(strBuilder.toString());
 
 
 //		System.out.println("variables to project : ");
@@ -210,21 +251,25 @@ final class Main {
 
 			// If an option is found
 			if (args[i].startsWith("-")) {
-
 				String optionName = args[i];
-				String optionValue = args[i+1];
 
-				// Check the next value
-				optionValue = checkOptionValue(optionName, optionValue);
-				applyArgument(optionName, optionValue);
+				if (optionName.equals("-verbose")) {
+					applyArgument(optionName, "");
+				} else {
 
-				i++;
+					String optionValue = args[i+1];
+
+					// Check the next value
+					optionValue = checkOptionValue(optionName, optionValue);
+					applyArgument(optionName, optionValue);
+					i++;
+				}
 			}
 		}
 
 		// Set the path to the files
-		queryFile = workingDir + "/" + queryFilename;
-		dataFile = workingDir + "/" + dataFilename;
+		queryFilePath = workingDir + "/" + queryFilename;
+		dataFilePath = workingDir + "/" + dataFilename;
 
 		// Init log writers
 		Log.initFileWriter();
@@ -234,15 +279,21 @@ final class Main {
 		switch (option) {
 			case "-workingDir":
 				workingDir = value;
+				Log.setWorkingDirectory(workingDir);
 				break;
 			case "-queries":
 				queryFilename = value;
+				Log.setQueryFileName(queryFilename);
 				break;
 			case "-data":
 				dataFilename = value;
+				Log.setDataFileName(dataFilename);
 				break;
 			case "-output":
 				Log.setFOLDER(value);
+				break;
+			case "-verbose":
+				Log.setIsVerbose(true);
 				break;
 		}
 	}
@@ -269,6 +320,7 @@ final class Main {
 		System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
 		System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
 		System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
+		System.out.println("\t -verbose --> print during execution process information on the console.");
 		System.out.println("\n[i] Usage example");
 		System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
 		System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");
