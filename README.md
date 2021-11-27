@@ -34,7 +34,7 @@ cd MiniStarQueryEngine
 * `-queries` <path/to/file> &rarr; absolute path to the queries file, or the relative from a working directory specified;
 * `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified;
 * `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output;
-* `-verbose` &rarr; Display all information on the console.
+* `-verbose` &rarr; print all information during execution process on the console. (NB: Logs are always displayed (tips: doesn't affect logs output)
 
 <details><summary>See usage sample</summary>
 <br/>
