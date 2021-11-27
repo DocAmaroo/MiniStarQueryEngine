@@ -9,7 +9,7 @@ This project aims at implementing a mini star query engine. Done during our seco
 | 🎓 Name                | 📧 Email                                 | 🏷️ Student number |
 | -------------------- | -------------------------------------- | ---------------- |
 | **CANTA** Thomas     | thomas.canta@etu.umontpellier.fr       | 21607288         |
-| **FONTAINE** Quentin | fontaine02.quentin@etu.umontpellier.fr | 21614404         |
+| **FONTAINE** Quentin | fontaine02.quentin@etu.umontpellier.fr | 21611404         |
 
 ## Installation
 
