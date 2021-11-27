@@ -146,6 +146,56 @@ public class Query {
         return result;
     }
 
+    // NAIVE VERSION OF FETCH
+    public TreeSet<Integer> fetchNaive(Dictionary dictionary) {
+
+        // For verbose only
+        StringBuilder strBuilder = new StringBuilder();
+        strBuilder.append("\n[i] Fetching... \n").append(toString());
+
+        boolean errFlag = false;
+
+        TreeSet<Integer> keyResults = new TreeSet<>();
+
+        for (Clause clause : where) {
+            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
+            int objectValue = dictionary.getWordByValue(clause.getObject());
+
+            // Check if we found a value for both, else no response available
+            if (predicateValue == -1 || objectValue == -1) {
+                errFlag = true;
+                break;
+            }
+
+            // Search by using pos method
+            TreeMap<Integer, TreeSet<Integer>> subMap = Indexation.pos.get(predicateValue);
+            TreeSet<Integer> subjects = subMap.get(objectValue);
+
+            // No subjects found, mean no valid response
+            if (subjects == null) {
+                errFlag = true;
+                break;
+            }
+
+            // First response receive with the first where condition
+            if (keyResults.isEmpty()) {
+                keyResults.addAll(subjects);
+            }
+
+            // Else, compare the two arrays and keep the common value
+            else {
+                keyResults.retainAll(subjects);
+
+                if (keyResults.isEmpty()) {
+                    errFlag = true;
+                    break;
+                }
+            }
+        }
+
+        return keyResults;
+    }
+
     @Override
     public String toString() {
 
