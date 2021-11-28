@@ -22,12 +22,32 @@ cd MiniStarQueryEngine
 
 ### JAR
 
-⚠️ The export of our project in .jar is currently unavailable. It is currently impossible to go through this step.
+Here is the main command line to use to execute the *.jar* file:
+
+```bash
+java -jar qengine.jar [OPTIONS]
+```
+
+The options available are listed [here](#Options)
+
+<details><summary>See usage sample</summary>
+<br/>
+
+The two samples below or equivalent.
+
+`java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset -verbose`
+
+`java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -verbose`
+
+</details><br/>
 
 ### Alternative
 
-👉 Open the project on Intellij or Eclipse  
-👉 On the run add the arguments below:
+👉 Open the project on Intellij or Eclipse and add the options as arguments on run.
+
+### Options
+
+Here is the available options you can use to execute the program:
 
 * `-help` &rarr; show this message;
 * `-workingDir` <path/to/dir> &rarr; path to the directory containing queries or/and data. This value is optional;
@@ -35,14 +55,3 @@ cd MiniStarQueryEngine
 * `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified;
 * `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output;
 * `-verbose` &rarr; print all information during execution process on the console. (tips: doesn't affect logs output)
-
-<details><summary>See usage sample</summary>
-<br/>
-
-The two samples below or equivalent.
-
-`-data ~/data/sample_data.nt -queries ~/data/sample_query.queryset -verbose`
-
-`-workingDir ~/data -data sample_data.nt -queries sample_query.queryset -verbose`
-
-</details><br/>

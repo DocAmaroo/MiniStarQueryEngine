@@ -279,15 +279,15 @@ final class Main {
 		switch (option) {
 			case "-workingDir":
 				workingDir = value;
-				Log.setWorkingDirectory(workingDir);
+				Log.setFolderWorkingDir(workingDir);
 				break;
 			case "-queries":
 				queryFilename = value;
-				Log.setQueryFileName(queryFilename);
+				Log.setFileQuery(queryFilename);
 				break;
 			case "-data":
 				dataFilename = value;
-				Log.setDataFileName(dataFilename);
+				Log.setFileData(dataFilename);
 				break;
 			case "-output":
 				Log.setFOLDER(value);
