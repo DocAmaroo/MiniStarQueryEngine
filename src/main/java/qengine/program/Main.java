@@ -16,7 +16,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import qengine.program.logs.Log;
 import qengine.program.models.Query;
-import qengine.program.models.Clause;
+import qengine.program.models.Triplet;
 import qengine.program.parsers.DictionaryRDFHandler;
 import qengine.program.parsers.IndexationRDFHandler;
 import qengine.program.parsers.MainRDFHandler;
@@ -52,11 +52,13 @@ final class Main {
 	 */
 	private static String dataFilePath;
 
+	private static long nbQuery = 0;
+	private static long nbQueryFound = 0;
 
 	/**
 	 * Instance of the dictionary and the indexes
 	 */
-	private static final Dictionary dictionary = Dictionary.getInstance();
+	private static Dictionary dictionary;
 	private static final Indexation indexation = Indexation.getInstance();
 	// ========================================================================
 
@@ -91,6 +93,9 @@ final class Main {
 		mainExecutionTime = System.currentTimeMillis() - mainExecutionTime;
 		Log.setExecTimeMain(mainExecutionTime);
 
+
+		System.out.println("[i] Nombre de query: " + nbQuery);
+		System.out.println("[i] Nombre de query ayant eu une réponse: " + nbQueryFound);
 		// Display on the console and save the logs
 		Log.save();
 
@@ -112,16 +117,19 @@ final class Main {
 		long endTimer;
 
 		// Mise en place du dictionnaire --------------------------------------------------
+		DictionaryRDFHandler dicoRDF = new DictionaryRDFHandler();
 		startTimer = System.currentTimeMillis();
-		parse(new DictionaryRDFHandler());
+		parse(dicoRDF);
 		endTimer = System.currentTimeMillis() - startTimer;
+		dictionary = dicoRDF.getDico();
 		strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
 		Log.setExecTimeDictionary(endTimer);
 		// --------------------------------------------------------------------------------
 
+
 		// Mise en place de l'indexation --------------------------------------------------
 		startTimer = System.currentTimeMillis();
-		parse(new IndexationRDFHandler());
+		parse(new IndexationRDFHandler(dictionary));
 		endTimer = System.currentTimeMillis() - startTimer;
 		strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
 		Log.setExecTimeIndexation(endTimer);
@@ -147,7 +155,7 @@ final class Main {
 	private static void parseQueries() throws FileNotFoundException, IOException {
 		/**
 		 * Try-with-resources
-		 * 
+		 *
 		 * @see <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">Try-with-resources</a>
 		 */
 		/*
@@ -182,17 +190,18 @@ final class Main {
 	 * Méthode utilisée ici lors du parsing de requête sparql pour agir sur l'objet obtenu.
 	 */
 	public static void processAQuery(ParsedQuery query) {
+		nbQuery++;
 		Query q = new Query();
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
 
 		for (StatementPattern pattern : patterns) {
-			String subject = pattern.getSubjectVar().getName().toString();
+			String subject = pattern.getSubjectVar().getName();
 			String predicate = pattern.getPredicateVar().getValue().stringValue();
 			String object = pattern.getObjectVar().getValue().stringValue();
-			Clause whereClause = new Clause(subject, predicate, object);
+			Triplet triplet = new Triplet(subject, predicate, object);
 
-			q.addWhereClause(whereClause);
+			q.addTriplet(triplet);
 		}
 
 		// For verbose only
@@ -205,6 +214,7 @@ final class Main {
 			strBuilder.append("\n[i] Cannot found a response to this query");
 		}
 		else {
+			nbQueryFound++;
 			strBuilder.append("\n[i] Query response:");
 			for (int key : response) {
 				strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));

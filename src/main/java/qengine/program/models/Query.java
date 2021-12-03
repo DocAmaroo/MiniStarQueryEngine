@@ -10,14 +10,14 @@ import java.util.TreeSet;
 public class Query {
 
     private String select;
-    private ArrayList<Clause> where;
+    private ArrayList<Triplet> where;
 
     public Query() {
         this.select = "";
         this.where = new ArrayList<>();
     }
 
-    public Query(String select, ArrayList<Clause> where) {
+    public Query(String select, ArrayList<Triplet> where) {
         this.select = select;
         this.where = where;
     }
@@ -26,28 +26,28 @@ public class Query {
         this.select = select;
     }
 
-    public void setWhere(ArrayList<Clause> where) {
+    public void setWhere(ArrayList<Triplet> where) {
         this.where = where;
     }
 
-    public void addWhereClause(Clause whereClause) {
-        this.where.add(whereClause);
+    public void addTriplet(Triplet whereTriplet) {
+        this.where.add(whereTriplet);
     }
 
     public TreeSet<Integer> fetch(Dictionary dictionary) {
         if (where.size() == 1) {
-            return fetchClause(dictionary, where.get(0));
+            return fetchTriplet(dictionary, where.get(0));
         } else {
             return mergeJoin(dictionary, where);
         }
     }
 
-    public TreeSet<Integer> fetchClause(Dictionary dictionary, Clause clause) {
+    public TreeSet<Integer> fetchTriplet(Dictionary dictionary, Triplet clause) {
         TreeSet<Integer> subjectsFound = new TreeSet<>();
 
         // Retrieve predicate and object id from the dictionary
-        int predValue = dictionary.getWordByValue(clause.getPredicate());
-        int objValue = dictionary.getWordByValue(clause.getObject());
+        int predValue = dictionary.getWordReverseByKey(clause.getPredicate());
+        int objValue = dictionary.getWordReverseByKey(clause.getObject());
 
         // Check if we found a value for both value, else no response available
         if (predValue == -1 || objValue == -1) {
@@ -84,14 +84,14 @@ public class Query {
         return subjectsFound;
     }
 
-    public TreeSet<Integer> mergeJoin(Dictionary dictionary, ArrayList<Clause> clauses) {
+    public TreeSet<Integer> mergeJoin(Dictionary dictionary, ArrayList<Triplet> clauses) {
         //ex: (([0, 1, 2] join [0, 2, 5]) join [2, 5, 7]) --> [2]
 
         TreeSet<Integer> response;
 
         // Init the response with a first join
-        TreeSet<Integer> fetchA = fetchClause(dictionary, clauses.get(0));
-        TreeSet<Integer> fetchB = fetchClause(dictionary, clauses.get(1));
+        TreeSet<Integer> fetchA = fetchTriplet(dictionary, clauses.get(0));
+        TreeSet<Integer> fetchB = fetchTriplet(dictionary, clauses.get(1));
 
         if (fetchA == null || fetchB == null) {
             return null;
@@ -103,7 +103,7 @@ public class Query {
         }
 
         for (int i = 2; i < clauses.size(); i++) {
-            TreeSet<Integer> fetch = fetchClause(dictionary, clauses.get(i));
+            TreeSet<Integer> fetch = fetchTriplet(dictionary, clauses.get(i));
             response = join(response, fetch);
 
             if (response.isEmpty()) {
@@ -157,9 +157,9 @@ public class Query {
 
         TreeSet<Integer> keyResults = new TreeSet<>();
 
-        for (Clause clause : where) {
-            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
-            int objectValue = dictionary.getWordByValue(clause.getObject());
+        for (Triplet clause : where) {
+            int predicateValue = dictionary.getWordReverseByKey(clause.getPredicate());
+            int objectValue = dictionary.getWordReverseByKey(clause.getObject());
 
             // Check if we found a value for both, else no response available
             if (predicateValue == -1 || objectValue == -1) {
@@ -201,7 +201,7 @@ public class Query {
 
         // Transform the where clause into a string
         StringBuilder whereBuilder = new StringBuilder();
-        for (Clause clause : where) whereBuilder.append(clause).append("\n");
+        for (Triplet clause : where) whereBuilder.append(clause).append("\n");
 
         return "SELECT ?" + select + " WHERE {\n" + whereBuilder.toString() + " }";
     }
@@ -224,7 +224,7 @@ public class Query {
 //
 //        TreeSet<Integer> keyResults = new TreeSet<>();
 //
-//        for (Clause clause : where) {
+//        for (Triplet clause : where) {
 //            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
 //            int objectValue = dictionary.getWordByValue(clause.getObject());
 //

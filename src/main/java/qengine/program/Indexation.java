@@ -37,7 +37,7 @@ public class Indexation {
     /**
      * Add to all index, at the correct format needed
      */
-    public void addToAllIndex(int subject, int predicate, int object) {
+    public static void addToAllIndex(int subject, int predicate, int object) {
         addToIndex(ops, object, predicate, subject);
         addToIndex(pos, predicate, object, subject);
         addToIndex(spo, subject, predicate, object);
@@ -47,7 +47,7 @@ public class Indexation {
         updFrequency(object);
     }
 
-    public void addToIndex(TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> index, int key, int subKey, int value) {
+    public static void addToIndex(TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> index, int key, int subKey, int value) {
 
         // The pattern we navigate throughout looks like: <key <subkey, [values...]>>
         // ex: sop = <subject <object, [predicates...]>>
@@ -73,7 +73,7 @@ public class Indexation {
         }
     }
 
-    private void updFrequency(int n) {
+    private static void updFrequency(int n) {
         if (frequences.containsKey(n)) {
             frequences.replace(n, frequences.get(n) + 1);
         } else {
