@@ -16,7 +16,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import qengine.program.logs.Log;
 import qengine.program.models.Query;
-import qengine.program.models.Clause;
+import qengine.program.models.Triplet;
 import qengine.program.parsers.DictionaryRDFHandler;
 import qengine.program.parsers.IndexationRDFHandler;
 import qengine.program.parsers.MainRDFHandler;
@@ -52,12 +52,14 @@ final class Main {
 	 */
 	private static String dataFilePath;
 
+	private static long nbQuery = 0;
+	private static long nbQueryFound = 0;
 
 	/**
 	 * Instance of the dictionary and the indexes
 	 */
-	private static final Dictionary dictionary = Dictionary.getInstance();
-	private static final Indexation indexation = Indexation.getInstance();
+	private static Dictionary dictionary;
+	private static Indexation indexation;
 	// ========================================================================
 
 	/**
@@ -91,6 +93,9 @@ final class Main {
 		mainExecutionTime = System.currentTimeMillis() - mainExecutionTime;
 		Log.setExecTimeMain(mainExecutionTime);
 
+
+		System.out.println("[i] Nombre de query: " + nbQuery);
+		System.out.println("[i] Nombre de query ayant eu une réponse: " + nbQueryFound);
 		// Display on the console and save the logs
 		Log.save();
 
@@ -112,19 +117,26 @@ final class Main {
 		long endTimer;
 
 		// Mise en place du dictionnaire --------------------------------------------------
+		DictionaryRDFHandler dicoRDF = new DictionaryRDFHandler();
 		startTimer = System.currentTimeMillis();
-		parse(new DictionaryRDFHandler());
+		parse(dicoRDF);
 		endTimer = System.currentTimeMillis() - startTimer;
 		strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
 		Log.setExecTimeDictionary(endTimer);
+
+		dictionary = dicoRDF.getDico();
 		// --------------------------------------------------------------------------------
 
+
 		// Mise en place de l'indexation --------------------------------------------------
+		IndexationRDFHandler indexRDF = new IndexationRDFHandler(dictionary);
 		startTimer = System.currentTimeMillis();
-		parse(new IndexationRDFHandler());
+		parse(indexRDF);
 		endTimer = System.currentTimeMillis() - startTimer;
 		strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
 		Log.setExecTimeIndexation(endTimer);
+
+		indexation = indexRDF.getIndex();
 		// --------------------------------------------------------------------------------
 	}
 
@@ -147,7 +159,7 @@ final class Main {
 	private static void parseQueries() throws FileNotFoundException, IOException {
 		/**
 		 * Try-with-resources
-		 * 
+		 *
 		 * @see <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">Try-with-resources</a>
 		 */
 		/*
@@ -182,29 +194,31 @@ final class Main {
 	 * Méthode utilisée ici lors du parsing de requête sparql pour agir sur l'objet obtenu.
 	 */
 	public static void processAQuery(ParsedQuery query) {
+		nbQuery++;
 		Query q = new Query();
 
 		List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
 
 		for (StatementPattern pattern : patterns) {
-			String subject = pattern.getSubjectVar().getName().toString();
+			String subject = pattern.getSubjectVar().getName();
 			String predicate = pattern.getPredicateVar().getValue().stringValue();
 			String object = pattern.getObjectVar().getValue().stringValue();
-			Clause whereClause = new Clause(subject, predicate, object);
+			Triplet triplet = new Triplet(subject, predicate, object);
 
-			q.addWhereClause(whereClause);
+			q.addTriplet(triplet);
 		}
 
 		// For verbose only
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
 
-		TreeSet<Integer> response = q.fetch(dictionary);
+		TreeSet<Integer> response = q.fetch(dictionary, indexation);
 
 		if (response == null || response.isEmpty()) {
 			strBuilder.append("\n[i] Cannot found a response to this query");
 		}
 		else {
+			nbQueryFound++;
 			strBuilder.append("\n[i] Query response:");
 			for (int key : response) {
 				strBuilder.append("\n\t* ").append(dictionary.getWordByKey(key));
@@ -213,21 +227,6 @@ final class Main {
 
 		strBuilder.append("\n").append(Utils.HLINE);
 		if (Log.isVerbose) System.out.println(strBuilder.toString());
-
-
-//		System.out.println("variables to project : ");
-
-		// Utilisation d'une classe anonyme
-//		query.getTupleExpr().visit(new AbstractQueryModelVisitor<RuntimeException>() {
-//
-//			public void meet(Projection projection) {
-//				List<ProjectionElem> elements = projection.getProjectionElemList().getElements();
-//
-//				System.out.println("[i] Element " + Utils.HLINE);
-//				System.out.println(elements);
-//				System.out.println(Utils.HLINE);
-//			}
-//		});
 	}
 
 	public static void handleArguments(String[] args) throws IOException {
@@ -279,15 +278,15 @@ final class Main {
 		switch (option) {
 			case "-workingDir":
 				workingDir = value;
-				Log.setWorkingDirectory(workingDir);
+				Log.setFolderWorkingDir(workingDir);
 				break;
 			case "-queries":
 				queryFilename = value;
-				Log.setQueryFileName(queryFilename);
+				Log.setFileQuery(queryFilename);
 				break;
 			case "-data":
 				dataFilename = value;
-				Log.setDataFileName(dataFilename);
+				Log.setFileData(dataFilename);
 				break;
 			case "-output":
 				Log.setFOLDER(value);
@@ -320,7 +319,7 @@ final class Main {
 		System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
 		System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
 		System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
-		System.out.println("\t -verbose --> print during execution process information on the console.");
+		System.out.println("\t -verbose --> print all information during execution process on the console. (tips: doesn't affect logs output)");
 		System.out.println("\n[i] Usage example");
 		System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
 		System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");

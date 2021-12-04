@@ -1,6 +1,7 @@
 package qengine.program.logs;
 
 import qengine.program.models.ExecutionTime;
+import qengine.program.models.FilePath;
 import qengine.program.utils.Utils;
 
 import java.io.*;
@@ -35,9 +36,9 @@ public class Log {
     /**
      * FILE && DIRECTORY
      */
-    public static String dataFileName;
-    public static String queryFileName;
-    public static String workingDirectory;
+    public static FilePath FILE_DATA = new FilePath("Data", "The data file given");
+    public static FilePath FILE_QUERY = new FilePath("Query", "The query file given");
+    public static FilePath FOLDER_WORKING_DIR =  new FilePath("Working Directory", "The working directory containing data and query files", "FOLDER");
 
     /**
      * EXECUTION TIMER
@@ -55,21 +56,17 @@ public class Log {
 
     public static void initFileWriter() throws IOException {
         try {
-            // First create the output folder if it doesn't exist
             File file = new File(FOLDER);
-            if (!file.exists()) {
 
-                // if an error occurred, else the folder has been created
-                if (!file.mkdirs()) System.out.println("[!] Cannot created output folder");
-
+            // Create the output folder if it doesn't exist
+            if (!file.exists() && !file.mkdirs()) {
+                System.err.println("[!] Cannot created output folder");
             } else {
-
-                // Verification done, we can initialize our writers
                 FILE_WRITER = new FileWriter(getOutputPath());
                 BUFFERED_WRITER = new BufferedWriter(FILE_WRITER);
                 OUTPUT_FILE = new PrintWriter(BUFFERED_WRITER);
-
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,16 +80,16 @@ public class Log {
         Log.FOLDER = FOLDER;
     }
 
-    public static void setDataFileName(String dataFileName) {
-        Log.dataFileName = dataFileName;
+    public static void setFileData(String path) {
+        Log.FILE_DATA.setPath(path);
     }
 
-    public static void setQueryFileName(String queryFileName) {
-        Log.queryFileName = queryFileName;
+    public static void setFileQuery(String path) {
+        Log.FILE_QUERY.setPath(path);
     }
 
-    public static void setWorkingDirectory(String workingDirectory) {
-        Log.workingDirectory = workingDirectory;
+    public static void setFolderWorkingDir(String path) {
+        Log.FOLDER_WORKING_DIR.setPath(path);
     }
 
     public static void setExecTimeDictionary(long execTimeDictionary) {
@@ -123,10 +120,11 @@ public class Log {
         displayAllLogs();
 
         write(csvHeader());
-        write("FILE,DATA,"+dataFileName+",Name of the data file");
-        write("FILE,QUERY,"+queryFileName+",Name of the query file");
-        if (workingDirectory != null)
-            write("FILE,WORKING DIRECTORY,"+queryFileName+",The path to the working directory");
+        if (!FOLDER_WORKING_DIR.getPath().isEmpty()) {
+            write(FOLDER_WORKING_DIR.toCSV());
+        }
+        write(FILE_DATA.toCSV());
+        write(FILE_QUERY.toCSV());
         write(EXEC_TIME_DICTIONARY.toCSV());
         write(EXEC_TIME_INDEXATION.toCSV());
         write(EXEC_TIME_QUERY.toCSV());
@@ -146,6 +144,11 @@ public class Log {
      */
     public static void displayAllLogs() {
         System.out.println("\n\n# LOGS " + Utils.HLINE);
+        if (!FOLDER_WORKING_DIR.getPath().isEmpty()) {
+            System.out.println(FOLDER_WORKING_DIR);
+        }
+        System.out.println(FILE_DATA);
+        System.out.println(FILE_QUERY);
         System.out.println(EXEC_TIME_DICTIONARY);
         System.out.println(EXEC_TIME_INDEXATION);
         System.out.println(EXEC_TIME_QUERY);

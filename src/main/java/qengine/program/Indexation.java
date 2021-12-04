@@ -6,24 +6,18 @@ import java.util.*;
 
 public class Indexation {
 
-    private static Indexation instance = new Indexation();
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> ops;
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
 
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> ops;
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
+    private HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
 
-    public static HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
-
-    private Indexation() {
+    public Indexation() {
         ops = new TreeMap<>();
         pos = new TreeMap<>();
         spo = new TreeMap<>();
 
         frequences = new HashMap<Integer, Integer>();
-    }
-
-    public static Indexation getInstance() {
-        return instance;
     }
 
     public TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> getPos() {
@@ -32,6 +26,14 @@ public class Indexation {
 
     public TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> getOps() {
         return ops;
+    }
+
+    public HashMap<Integer, Integer> getFrequences() {
+        return frequences;
+    }
+
+    public Integer getFrequence(int key) {
+        return frequences.get(key);
     }
 
     /**
