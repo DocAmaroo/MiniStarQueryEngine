@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
@@ -33,24 +34,14 @@ final class Main {
 	public static String workingDir = "";
 
 	/**
-	 * Nom du fichier contenant les requêtes
+	 * Chemin du fichier/dossier contenant les requêtes sparql
 	 */
-	public static String queryFilename = "";
+	private static String queryPath;
 
 	/**
-	 * Chemin du fichier contenant les requêtes sparql
+	 * Chemin du fichier/dossier contenant les données
 	 */
-	private static String queryFilePath;
-
-	/**
-	 * Fichier contenant des données rdf
-	 */
-	public static String dataFilename = "";
-
-	/**
-	 * Chemin du fichier contenant les données
-	 */
-	private static String dataFilePath;
+	private static String dataPath;
 
 	private static long nbQuery = 0;
 	private static long nbQueryFound = 0;
@@ -78,12 +69,15 @@ final class Main {
 		handleArguments(args);
 
 		System.out.println("# Parsing data " + Utils.HLINE);
+		startTimer = System.currentTimeMillis();
 		parseData();
+		endTimer = System.currentTimeMillis() - startTimer;
+		strBuilder.append("[+] Data parsing done! (").append(endTimer).append("ms)");
 
 		System.out.println("# Parsing queries " + Utils.HLINE);
 
 		startTimer = System.currentTimeMillis();
-		parseQueries();
+		parseQueries(queryPath);
 		endTimer = System.currentTimeMillis() - startTimer;
 		strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
 		Log.setExecTimeQuery(endTimer);
@@ -96,6 +90,8 @@ final class Main {
 
 		System.out.println("[i] Nombre de query: " + nbQuery);
 		System.out.println("[i] Nombre de query ayant eu une réponse: " + nbQueryFound);
+		System.out.println("[i] Nombre de query sans réponse " + (nbQuery-nbQueryFound));
+
 		// Display on the console and save the logs
 		Log.save();
 
@@ -105,9 +101,9 @@ final class Main {
 
 
 	/**
-	 * Traite chaque triple lu dans {@link #dataFilePath} avec {@link MainRDFHandler}.
+	 * Traite chaque triple lu dans {@link #dataPath} avec {@link MainRDFHandler}.
 	 */
-	private static void parseData() throws FileNotFoundException, IOException {
+	private static void parseData() throws IOException {
 
 		// For verbose only
 		StringBuilder strBuilder = new StringBuilder();
@@ -140,8 +136,24 @@ final class Main {
 		// --------------------------------------------------------------------------------
 	}
 
-	private static void parse(AbstractRDFHandler abstractRDFHandler) throws FileNotFoundException, IOException {
-		try (Reader dataReader = new FileReader(dataFilePath)) {
+	private static void parse(AbstractRDFHandler abstractRDFHandler) throws IOException {
+		File rep = new File(dataPath);
+
+		if (rep.isDirectory()) {
+			String[] fileList;
+
+			if ((fileList = rep.list()) != null) {
+				for (String file : fileList) {
+					parseDataFile(abstractRDFHandler, file);
+				}
+			}
+		} else {
+			parseDataFile(abstractRDFHandler, dataPath);
+		}
+	}
+
+	public static void parseDataFile(AbstractRDFHandler abstractRDFHandler, String filename) throws IOException {
+		try (Reader dataReader = new FileReader(filename)) {
 			// On va parser des données au format ntriples
 			RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
 
@@ -154,19 +166,39 @@ final class Main {
 	}
 
 	/**
-	 * Traite chaque requête lue dans {@link #queryFilePath} avec {@link #processAQuery(ParsedQuery)}.
+	 * Traite chaque requête lue dans {@link #queryPath} avec {@link #processAQuery(ParsedQuery)}.
 	 */
-	private static void parseQueries() throws FileNotFoundException, IOException {
-		/**
-		 * Try-with-resources
-		 *
-		 * @see <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">Try-with-resources</a>
-		 */
-		/*
-		 * On utilise un stream pour lire les lignes une par une, sans avoir à toutes les stocker
-		 * entièrement dans une collection.
-		 */
-		try (Stream<String> lineStream = Files.lines(Paths.get(queryFilePath))) {
+	private static void parseQueries(String filePath) {
+		File rep = new File(filePath);
+
+		if (rep.isDirectory()) {
+			List<String> files;
+
+			if (rep.list() != null) {
+				files = Arrays.stream(rep.list())
+						.filter(file -> file.endsWith(".queryset"))
+						.collect(Collectors.toList());
+
+				if (files.isEmpty()) {
+					System.err.println("[!] Aucun fichier de query (.queryset) est présent dans le dossier spécifié");
+					exit(0);
+				}
+				for (String file : files) {
+					parseQueriesFile(queryPath + "/" + file);
+				}
+			}
+		} else {
+			if (filePath.endsWith(".queryset")) {
+				parseQueriesFile(filePath);
+			} else {
+				System.err.println("[!] Le fichier de query spécifié est invalide (suffixe .queryset non reconnus)");
+				exit(0);
+			}
+		}
+	}
+
+	private static void parseQueriesFile(String file) {
+		try (Stream<String> lineStream = Files.lines(Paths.get(file))) {
 			SPARQLParser sparqlParser = new SPARQLParser();
 			Iterator<String> lineIterator = lineStream.iterator();
 			StringBuilder queryString = new StringBuilder();
@@ -187,6 +219,8 @@ final class Main {
 					queryString.setLength(0); // Reset le buffer de la requête en chaine vide
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -236,7 +270,7 @@ final class Main {
 		int index = -1;
 
 		if (argsToList.contains("-help")) {
-			help();
+			Utils.help();
 			exit(0);
 		}
 
@@ -259,7 +293,7 @@ final class Main {
 					String optionValue = args[i+1];
 
 					// Check the next value
-					optionValue = checkOptionValue(optionName, optionValue);
+					optionValue = Utils.checkOptionValue(optionName, optionValue);
 					applyArgument(optionName, optionValue);
 					i++;
 				}
@@ -267,8 +301,8 @@ final class Main {
 		}
 
 		// Set the path to the files
-		queryFilePath = workingDir + "/" + queryFilename;
-		dataFilePath = workingDir + "/" + dataFilename;
+		dataPath = workingDir + "/" + dataPath;
+		queryPath = workingDir + "/" + queryPath;
 
 		// Init log writers
 		Log.initFileWriter();
@@ -281,12 +315,12 @@ final class Main {
 				Log.setFolderWorkingDir(workingDir);
 				break;
 			case "-queries":
-				queryFilename = value;
-				Log.setFileQuery(queryFilename);
+				queryPath = value;
+				Log.setFileQuery(queryPath);
 				break;
 			case "-data":
-				dataFilename = value;
-				Log.setFileData(dataFilename);
+				dataPath = value;
+				Log.setFileData(dataPath);
 				break;
 			case "-output":
 				Log.setFOLDER(value);
@@ -296,33 +330,4 @@ final class Main {
 				break;
 		}
 	}
-
-	public static String checkOptionValue(String option, String value) {
-		if (value.startsWith("-")) {
-			System.err.println("[!] The value of the option " + option + " is incorrect.");
-			System.err.println("\t Value received: " + value);
-			exit(0);
-		}
-
-		if (value.endsWith("/")) {
-			return value.substring(0, value.length() - 1);
-		}
-
-		return value;
-	}
-
-	public static void help() {
-		System.out.println("java -jar <path/to/qengine.jar> [OPTIONS]");
-		System.out.println("\n[i] See available options below:");
-		System.out.println("\t -help --> show this message");
-		System.out.println("\t -workingDir <path/to/dir> --> path to the directory containing queries or/and data. This value is optional");
-		System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
-		System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
-		System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
-		System.out.println("\t -verbose --> print all information during execution process on the console. (tips: doesn't affect logs output)");
-		System.out.println("\n[i] Usage example");
-		System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
-		System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");
-	}
-
 }
