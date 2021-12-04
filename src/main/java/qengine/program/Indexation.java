@@ -6,24 +6,18 @@ import java.util.*;
 
 public class Indexation {
 
-    private static Indexation instance = new Indexation();
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> ops;
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
+    private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
 
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> ops;
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
-    public static TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
+    private HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
 
-    public static HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
-
-    private Indexation() {
+    public Indexation() {
         ops = new TreeMap<>();
         pos = new TreeMap<>();
         spo = new TreeMap<>();
 
         frequences = new HashMap<Integer, Integer>();
-    }
-
-    public static Indexation getInstance() {
-        return instance;
     }
 
     public TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> getPos() {
@@ -34,10 +28,18 @@ public class Indexation {
         return ops;
     }
 
+    public HashMap<Integer, Integer> getFrequences() {
+        return frequences;
+    }
+
+    public Integer getFrequence(int key) {
+        return frequences.get(key);
+    }
+
     /**
      * Add to all index, at the correct format needed
      */
-    public static void addToAllIndex(int subject, int predicate, int object) {
+    public void addToAllIndex(int subject, int predicate, int object) {
         addToIndex(ops, object, predicate, subject);
         addToIndex(pos, predicate, object, subject);
         addToIndex(spo, subject, predicate, object);
@@ -47,7 +49,7 @@ public class Indexation {
         updFrequency(object);
     }
 
-    public static void addToIndex(TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> index, int key, int subKey, int value) {
+    public void addToIndex(TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> index, int key, int subKey, int value) {
 
         // The pattern we navigate throughout looks like: <key <subkey, [values...]>>
         // ex: sop = <subject <object, [predicates...]>>
@@ -73,7 +75,7 @@ public class Indexation {
         }
     }
 
-    private static void updFrequency(int n) {
+    private void updFrequency(int n) {
         if (frequences.containsKey(n)) {
             frequences.replace(n, frequences.get(n) + 1);
         } else {

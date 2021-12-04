@@ -1,5 +1,6 @@
 package qengine.program.models;
 
+import org.apache.jena.tdb.index.Index;
 import qengine.program.Dictionary;
 import qengine.program.Indexation;
 
@@ -34,15 +35,15 @@ public class Query {
         this.where.add(whereTriplet);
     }
 
-    public TreeSet<Integer> fetch(Dictionary dictionary) {
+    public TreeSet<Integer> fetch(Dictionary dictionary, Indexation index) {
         if (where.size() == 1) {
-            return fetchTriplet(dictionary, where.get(0));
+            return fetchTriplet(dictionary, index, where.get(0));
         } else {
-            return mergeJoin(dictionary, where);
+            return mergeJoin(dictionary, index, where);
         }
     }
 
-    public TreeSet<Integer> fetchTriplet(Dictionary dictionary, Triplet clause) {
+    public TreeSet<Integer> fetchTriplet(Dictionary dictionary, Indexation index, Triplet clause) {
         TreeSet<Integer> subjectsFound = new TreeSet<>();
 
         // Retrieve predicate and object id from the dictionary
@@ -57,8 +58,8 @@ public class Query {
         }
 
         // Get the frequences
-        int predFreq = Indexation.frequences.get(predValue);
-        int objFreq = Indexation.frequences.get(objValue);
+        int predFreq = index.getFrequence(predValue);
+        int objFreq = index.getFrequence(objValue);
 
         // Check if we found a value for both frequency, else no response available
         if (predFreq == -1 || objFreq == -1) {
@@ -70,28 +71,28 @@ public class Query {
         // if predicate frequency is lower or equal to the object we use the POS method
         // else use te OPS method
         if (predFreq <= objFreq) {
-            TreeMap<Integer, TreeSet<Integer>> objects = Indexation.pos.get(predValue);
+            TreeMap<Integer, TreeSet<Integer>> objects = index.getPos().get(predValue);
             if (objects != null) {
-                subjectsFound = Indexation.pos.get(predValue).get(objValue);
+                subjectsFound = index.getPos().get(predValue).get(objValue);
             }
         } else {
-            TreeMap<Integer, TreeSet<Integer>> predicates = Indexation.ops.get(objValue);
+            TreeMap<Integer, TreeSet<Integer>> predicates = index.getOps().get(objValue);
             if (predicates != null) {
-                subjectsFound = Indexation.ops.get(objValue).get(predValue);
+                subjectsFound = index.getOps().get(objValue).get(predValue);
             }
         }
 
         return subjectsFound;
     }
 
-    public TreeSet<Integer> mergeJoin(Dictionary dictionary, ArrayList<Triplet> clauses) {
+    public TreeSet<Integer> mergeJoin(Dictionary dictionary, Indexation index, ArrayList<Triplet> clauses) {
         //ex: (([0, 1, 2] join [0, 2, 5]) join [2, 5, 7]) --> [2]
 
         TreeSet<Integer> response;
 
         // Init the response with a first join
-        TreeSet<Integer> fetchA = fetchTriplet(dictionary, clauses.get(0));
-        TreeSet<Integer> fetchB = fetchTriplet(dictionary, clauses.get(1));
+        TreeSet<Integer> fetchA = fetchTriplet(dictionary, index, clauses.get(0));
+        TreeSet<Integer> fetchB = fetchTriplet(dictionary, index, clauses.get(1));
 
         if (fetchA == null || fetchB == null) {
             return null;
@@ -103,7 +104,7 @@ public class Query {
         }
 
         for (int i = 2; i < clauses.size(); i++) {
-            TreeSet<Integer> fetch = fetchTriplet(dictionary, clauses.get(i));
+            TreeSet<Integer> fetch = fetchTriplet(dictionary, index, clauses.get(i));
             response = join(response, fetch);
 
             if (response.isEmpty()) {
@@ -147,7 +148,7 @@ public class Query {
     }
 
     // NAIVE VERSION OF FETCH
-    public TreeSet<Integer> fetchNaive(Dictionary dictionary) {
+    public TreeSet<Integer> fetchNaive(Dictionary dictionary, Indexation index) {
 
         // For verbose only
         StringBuilder strBuilder = new StringBuilder();
@@ -168,7 +169,7 @@ public class Query {
             }
 
             // Search by using pos method
-            TreeMap<Integer, TreeSet<Integer>> subMap = Indexation.pos.get(predicateValue);
+            TreeMap<Integer, TreeSet<Integer>> subMap = index.getPos().get(predicateValue);
             TreeSet<Integer> subjects = subMap.get(objectValue);
 
             // No subjects found, mean no valid response

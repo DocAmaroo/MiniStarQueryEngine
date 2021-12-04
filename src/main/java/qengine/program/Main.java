@@ -59,7 +59,7 @@ final class Main {
 	 * Instance of the dictionary and the indexes
 	 */
 	private static Dictionary dictionary;
-	private static final Indexation indexation = Indexation.getInstance();
+	private static Indexation indexation;
 	// ========================================================================
 
 	/**
@@ -121,18 +121,22 @@ final class Main {
 		startTimer = System.currentTimeMillis();
 		parse(dicoRDF);
 		endTimer = System.currentTimeMillis() - startTimer;
-		dictionary = dicoRDF.getDico();
 		strBuilder.append("[+] Dictionary done! (").append(endTimer).append("ms)");
 		Log.setExecTimeDictionary(endTimer);
+
+		dictionary = dicoRDF.getDico();
 		// --------------------------------------------------------------------------------
 
 
 		// Mise en place de l'indexation --------------------------------------------------
+		IndexationRDFHandler indexRDF = new IndexationRDFHandler(dictionary);
 		startTimer = System.currentTimeMillis();
-		parse(new IndexationRDFHandler(dictionary));
+		parse(indexRDF);
 		endTimer = System.currentTimeMillis() - startTimer;
 		strBuilder.append("[+] Indexation done! (").append(endTimer).append("ms)");
 		Log.setExecTimeIndexation(endTimer);
+
+		indexation = indexRDF.getIndex();
 		// --------------------------------------------------------------------------------
 	}
 
@@ -208,7 +212,7 @@ final class Main {
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
 
-		TreeSet<Integer> response = q.fetch(dictionary);
+		TreeSet<Integer> response = q.fetch(dictionary, indexation);
 
 		if (response == null || response.isEmpty()) {
 			strBuilder.append("\n[i] Cannot found a response to this query");
@@ -223,21 +227,6 @@ final class Main {
 
 		strBuilder.append("\n").append(Utils.HLINE);
 		if (Log.isVerbose) System.out.println(strBuilder.toString());
-
-
-//		System.out.println("variables to project : ");
-
-		// Utilisation d'une classe anonyme
-//		query.getTupleExpr().visit(new AbstractQueryModelVisitor<RuntimeException>() {
-//
-//			public void meet(Projection projection) {
-//				List<ProjectionElem> elements = projection.getProjectionElemList().getElements();
-//
-//				System.out.println("[i] Element " + Utils.HLINE);
-//				System.out.println(elements);
-//				System.out.println(Utils.HLINE);
-//			}
-//		});
 	}
 
 	public static void handleArguments(String[] args) throws IOException {

@@ -1,6 +1,7 @@
 package qengine.program;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class Dictionary {
 
@@ -37,11 +38,7 @@ public class Dictionary {
 
     public int getWordReverseByKey(String key){
         Integer value = wordsReverse.get(key);
-        if (value == null) {
-            return -1;
-        } else {
-            return value;
-        }
+        return Objects.requireNonNullElse(value, -1);
     }
 
     public void addWord(String word) {
