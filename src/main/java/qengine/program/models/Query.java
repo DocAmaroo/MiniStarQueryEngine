@@ -1,6 +1,5 @@
 package qengine.program.models;
 
-import org.apache.jena.tdb.index.Index;
 import qengine.program.Dictionary;
 import qengine.program.Indexation;
 
@@ -20,14 +19,6 @@ public class Query {
 
     public Query(String select, ArrayList<Triplet> where) {
         this.select = select;
-        this.where = where;
-    }
-
-    public void setSelect(String select) {
-        this.select = select;
-    }
-
-    public void setWhere(ArrayList<Triplet> where) {
         this.where = where;
     }
 
@@ -206,60 +197,23 @@ public class Query {
 
         return "SELECT ?" + select + " WHERE {\n" + whereBuilder.toString() + " }";
     }
-}
 
+    public boolean isEqual(Query newQuery) {
+        if (where.size() != newQuery.where.size()) {
+            return false;
+        }
 
+        if (!newQuery.where.containsAll(where)) {
+            return false;
+        }
 
-
-
-
-// ------ ARCHIVES
-// NAIVE VERSION OF FETCH
-//    public TreeSet<Integer> fetch(Dictionary dictionary) {
-//
-//        // For verbose only
-//        StringBuilder strBuilder = new StringBuilder();
-//        strBuilder.append("\n[i] Fetching... \n").append(toString());
-//
-//        boolean errFlag = false;
-//
-//        TreeSet<Integer> keyResults = new TreeSet<>();
-//
-//        for (Triplet clause : where) {
-//            int predicateValue = dictionary.getWordByValue(clause.getPredicate());
-//            int objectValue = dictionary.getWordByValue(clause.getObject());
-//
-//            // Check if we found a value for both, else no response available
-//            if (predicateValue == -1 || objectValue == -1) {
-//                errFlag = true;
-//                break;
-//            }
-//
-//            // Search by using pos method
-//            TreeMap<Integer, TreeSet<Integer>> subMap = Indexation.pos.get(predicateValue);
-//            TreeSet<Integer> subjects = subMap.get(objectValue);
-//
-//            // No subjects found, mean no valid response
-//            if (subjects == null) {
-//                errFlag = true;
-//                break;
-//            }
-//
-//            // First response receive with the first where condition
-//            if (keyResults.isEmpty()) {
-//                keyResults.addAll(subjects);
-//            }
-//
-//            // Else, compare the two arrays and keep the common value
-//            else {
-//                keyResults.retainAll(subjects);
-//
-//                if (keyResults.isEmpty()) {
-//                    errFlag = true;
-//                    break;
-//                }
+//        for (Triplet triplet : where) {
+//            if (!newQuery.where.containsAll(where)) {
+//                System.out.println("triplet not in: " + triplet);
+//                System.out.println(newQuery.where.contains(triplet));
+//                return false;
 //            }
 //        }
-//
-//        return keyResults;
-//    }
+        return true;
+    }
+}

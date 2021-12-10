@@ -51,6 +51,9 @@ final class Main {
 	 */
 	private static Dictionary dictionary;
 	private static Indexation indexation;
+
+	private static ArrayList<Query> queries = new ArrayList<>();
+
 	// ========================================================================
 
 	/**
@@ -91,6 +94,7 @@ final class Main {
 		System.out.println("[i] Nombre de query: " + nbQuery);
 		System.out.println("[i] Nombre de query ayant eu une réponse: " + nbQueryFound);
 		System.out.println("[i] Nombre de query sans réponse " + (nbQuery-nbQueryFound));
+		System.out.println("[i] Nombre de query dupliquée " + countDuplicates());
 
 		// Display on the console and save the logs
 		Log.save();
@@ -242,6 +246,8 @@ final class Main {
 			q.addTriplet(triplet);
 		}
 
+		queries.add(q);
+
 		// For verbose only
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append("\n[i] Fetching... \n").append(q.toString());
@@ -329,5 +335,34 @@ final class Main {
 				Log.setIsVerbose(true);
 				break;
 		}
+	}
+
+	public static int countDuplicates() {
+		int nbDuplicates = 0;
+		int counter;
+
+		ArrayList<Integer> toExclude = new ArrayList<>();
+
+		for (int i=0; i < queries.size(); i++) {
+			if (!toExclude.contains(i)) {
+				Query query = queries.get(i);
+				counter = 0;
+
+				for (int j = i + 1; j < queries.size(); j++) {
+					if (query.isEqual(queries.get(j))) {
+						counter++;
+						nbDuplicates++;
+						toExclude.add(j);
+					}
+				}
+
+				// [DEBUG ONLY]
+//				if (counter > 0) {
+//					System.out.println("[i] Query " + i + ": " + counter);
+//				}
+			}
+		}
+
+		return nbDuplicates;
 	}
 }
