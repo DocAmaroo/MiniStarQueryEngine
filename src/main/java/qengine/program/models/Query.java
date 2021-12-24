@@ -22,6 +22,10 @@ public class Query {
         this.where = where;
     }
 
+    public int getNbTriplet() {
+        return where.size();
+    }
+
     public void addTriplet(Triplet whereTriplet) {
         this.where.add(whereTriplet);
     }
@@ -203,9 +207,7 @@ public class Query {
             return false;
         }
 
-        if (!newQuery.where.containsAll(where)) {
-            return false;
-        }
+        return newQuery.where.containsAll(where);
 
 //        for (Triplet triplet : where) {
 //            if (!newQuery.where.containsAll(where)) {
@@ -214,6 +216,5 @@ public class Query {
 //                return false;
 //            }
 //        }
-        return true;
     }
 }
