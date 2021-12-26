@@ -24,6 +24,16 @@ public class Triplet {
     }
 
     @Override
+    public boolean equals(Object obj){
+        if (!(obj instanceof Triplet)) {
+            return false;
+        }
+
+        Triplet triplet = ((Triplet) obj);
+        return object.equals(triplet.object) && subject.equals(triplet.subject) && predicate.equals(triplet.predicate);
+    }
+
+    @Override
     public String toString() {
         return "\t?" + getSubject() + " " + getPredicate() + " " + getObject();
     }

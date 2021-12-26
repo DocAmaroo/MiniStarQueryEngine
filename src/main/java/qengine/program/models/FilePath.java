@@ -26,6 +26,10 @@ public class FilePath {
         this.path = path;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String toCSV() {
         return type + "," + name + "," + path + "," + description;
     }
