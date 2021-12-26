@@ -33,6 +33,7 @@ public class Utils {
         System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
         System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
         System.out.println("\t -verbose --> print all information during execution process on the console. (tips: doesn't affect logs output)");
+        System.out.println("\t -warmup <t/f> --> allow to activate or not the warmup. By default is true, otherwise use f");
         System.out.println("\n[i] Usage example");
         System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
         System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");

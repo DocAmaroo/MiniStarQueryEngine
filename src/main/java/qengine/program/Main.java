@@ -45,7 +45,6 @@ final class Main {
     /**
      * Query attributs
      */
-    private static long nbQuery = 0;
     private static long nbQueryWithResponse = 0;
     private static ArrayList<Query> queries = new ArrayList<>();
 
@@ -53,8 +52,8 @@ final class Main {
      * Store the number of queries split by the number of condition in them
      * ex: key=1 represent the number of queries with 1 conditions, i=1 with 2 conditions etc...
      */
-    private static HashMap<Integer, Integer> nbQueriesWithNTriplets = new HashMap<>();
-    private static HashMap<Integer, ArrayList<Integer>> queriesWithNTriplets = new HashMap<>();
+    private static HashMap<Integer, Integer> nbQueriesByNTriplets = new HashMap<>();
+    private static HashMap<Integer, ArrayList<Integer>> queriesIdByNTriplets = new HashMap<>();
 
     // ========================================================================
 
@@ -62,53 +61,72 @@ final class Main {
      * Entrée du programme
      */
     public static void main(String[] args) throws Exception {
+        int nbDuplicates = 0;
+
+        // Utiliser pour stocker le temps de départ et de fin d'évaluation
         long mainExecutionTime = System.currentTimeMillis();
+        long startTimer;
+        long endTimer;
 
         // For verbose only
         StringBuilder strBuilder = new StringBuilder();
 
-        // Utiliser pour stocker le temps de départ et de fin d'évaluation
-        long startTimer;
-        long endTimer;
-
+        // Start by handling arguments give
         handleArguments(args);
 
-        System.out.println("# Parsing data " + Utils.HLINE);
+        // Parse the file containing the data
+        System.out.println("[i] Parsing data...");
         startTimer = System.currentTimeMillis();
         parseData();
         endTimer = System.currentTimeMillis() - startTimer;
-        strBuilder.append("[+] Data parsing done! (").append(endTimer).append("ms)");
-
-        System.out.println("# Parsing queries " + Utils.HLINE);
+        System.out.println("[+] Parsing data done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
 
         // Parse the file containing all the query
+        System.out.println("[i] Parsing queries...");
+        startTimer = System.currentTimeMillis();
         parseQueries(queryPath);
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Parsing queries done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        // Remove duplicates
+        nbDuplicates = queries.size();
+        queries = removeDuplicateQuery();
+        nbDuplicates -= queries.size();
+
 
         // Warm up
-        warmup();
+        if (WARM_UP) {
+            setQueriesByNTriplets();
+
+            System.out.println("[i] Warm up...");
+            startTimer = System.currentTimeMillis();
+            warmup();
+            endTimer = System.currentTimeMillis() - startTimer;
+            System.out.println("[+] Warm up done (" + endTimer + "ms)");
+            System.out.println(Utils.HLINE);
+        }
 
         // Fetch all queries
+        System.out.println("[i] Fetching ...");
         startTimer = System.currentTimeMillis();
         fetchQuery();
         endTimer = System.currentTimeMillis() - startTimer;
-        strBuilder.append("[+] Queries done! (").append(endTimer).append("ms)");
-        Log.setExecTimeQuery(endTimer);
+        System.out.println("[+] Fetching done (" + endTimer + "ms)");
 
 
         // Logs only
-        mainExecutionTime = System.currentTimeMillis() - mainExecutionTime;
-        Log.setExecTimeMain(mainExecutionTime);
-
-
-        System.out.println("[i] Nombre de query: " + nbQuery);
-        System.out.println("[i] Nombre de query ayant eu une réponse: " + nbQueryWithResponse);
-        System.out.println("[i] Nombre de query sans réponse " + (nbQuery - nbQueryWithResponse));
-        System.out.println("[i] Nombre de query dupliquée " + countDuplicates());
-        System.out.println("[i] {nbPatrons = nbQuery} \n" + nbQueriesWithNTriplets);
-
-        // Display on the console and save the logs
+        Log.setExecTimeQuery(endTimer);
+        Log.setExecTimeMain(System.currentTimeMillis() - mainExecutionTime);
         Log.save();
 
+        System.out.println("[i] More informations: ");
+        System.out.println("\t* Total of query: " + queries.size());
+        System.out.println("\t* Number of query with response: " + nbQueryWithResponse);
+        System.out.println("\t* Number of query without response " + (queries.size() - nbQueryWithResponse));
+        System.out.println("\t* Number of query duplicate " + nbDuplicates);
+        if (WARM_UP) System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
     }
 
     // ========================================================================
@@ -243,7 +261,6 @@ final class Main {
      * Méthode utilisée ici lors du parsing de requête sparql pour agir sur l'objet obtenu.
      */
     public static void processAQuery(ParsedQuery query) {
-        nbQuery++;
         Query q = new Query();
 
         List<StatementPattern> patterns = StatementPatternCollector.process(query.getTupleExpr());
@@ -258,14 +275,18 @@ final class Main {
         }
 
         queries.add(q);
+    }
 
-        int nbTriplet = q.getNbTriplet();
-        if (!nbQueriesWithNTriplets.containsKey(nbTriplet)) {
-            nbQueriesWithNTriplets.put(nbTriplet, 1);
-            queriesWithNTriplets.put(nbTriplet, new ArrayList<>(List.of(queries.size() - 1)));
-        } else {
-            nbQueriesWithNTriplets.put(nbTriplet, nbQueriesWithNTriplets.get(nbTriplet) + 1);
-            queriesWithNTriplets.get(nbTriplet).add(queries.size() - 1);
+    private static void setQueriesByNTriplets() {
+        for (Query query : queries) {
+            int nbTriplet = query.getNbTriplet();
+            if (!nbQueriesByNTriplets.containsKey(nbTriplet)) {
+                nbQueriesByNTriplets.put(nbTriplet, 1);
+                queriesIdByNTriplets.put(nbTriplet, new ArrayList<>(List.of(queries.size() - 1)));
+            } else {
+                nbQueriesByNTriplets.put(nbTriplet, nbQueriesByNTriplets.get(nbTriplet) + 1);
+                queriesIdByNTriplets.get(nbTriplet).add(queries.size() - 1);
+            }
         }
     }
 
@@ -295,21 +316,17 @@ final class Main {
 
     private static void warmup() {
         int nbQueryToFetch = (int) Math.ceil(queries.size() * 0.05);
-        int counter = 0;
 
-        for (int i = 0; i < queriesWithNTriplets.size(); i++) {
-            ArrayList<Integer> queriesToFetch = queriesWithNTriplets.get(i+1);
+        for (int i = 0; i < queriesIdByNTriplets.size(); i++) {
+            ArrayList<Integer> queriesToFetch = queriesIdByNTriplets.get(i+1);
 
             int j=0;
             while(j < nbQueryToFetch && j < queriesToFetch.size()) {
                 int queryIndex = queriesToFetch.get(j);
                 queries.get(queryIndex).fetch(dictionary, indexation);
                 j++;
-                counter++;
             }
         }
-
-        System.out.println("counter: " + counter);
     }
 
     public static void handleArguments(String[] args) throws IOException {
@@ -378,31 +395,27 @@ final class Main {
                 Log.setIsVerbose(true);
                 break;
             case "-warmup":
-                WARM_UP = !value.equals("false");
+                WARM_UP = !value.equals("f");
         }
     }
 
-    public static int countDuplicates() {
-        int nbDuplicates = 0;
-        int counter;
-
+    public static ArrayList<Query> removeDuplicateQuery() {
+        ArrayList<Query> noDuplicate = new ArrayList<>();
         ArrayList<Integer> toExclude = new ArrayList<>();
 
         for (int i = 0; i < queries.size(); i++) {
             if (!toExclude.contains(i)) {
                 Query query = queries.get(i);
-                counter = 0;
+                noDuplicate.add(query);
 
                 for (int j = i + 1; j < queries.size(); j++) {
                     if (query.isEqual(queries.get(j))) {
-                        counter++;
-                        nbDuplicates++;
                         toExclude.add(j);
                     }
                 }
             }
         }
 
-        return nbDuplicates;
+        return noDuplicate;
     }
 }
