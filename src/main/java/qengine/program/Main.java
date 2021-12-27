@@ -126,7 +126,8 @@ final class Main {
         System.out.println("\t* Number of query with response: " + nbQueryWithResponse);
         System.out.println("\t* Number of query without response " + (queries.size() - nbQueryWithResponse));
         System.out.println("\t* Number of query duplicate " + nbDuplicates);
-        if (WARM_UP) System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
+        if (WARM_UP)
+            System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
     }
 
     // ========================================================================
@@ -315,16 +316,25 @@ final class Main {
     }
 
     private static void warmup() {
+        // We want 5% of each type of patrons
         int nbQueryToFetch = (int) Math.ceil(queries.size() * 0.05);
 
-        for (int i = 0; i < queriesIdByNTriplets.size(); i++) {
-            ArrayList<Integer> queriesToFetch = queriesIdByNTriplets.get(i+1);
+        HashMap<Integer, ArrayList<Query>> sortByNTriplet = new HashMap<>();
 
-            int j=0;
-            while(j < nbQueryToFetch && j < queriesToFetch.size()) {
-                int queryIndex = queriesToFetch.get(j);
-                queries.get(queryIndex).fetch(dictionary, indexation);
-                j++;
+        for (Query query : queries) {
+            int nbTriplet = query.getNbTriplet();
+
+            if (!sortByNTriplet.containsKey(nbTriplet)) {
+                sortByNTriplet.put(nbTriplet, new ArrayList<>(List.of(query)));
+            } else if (sortByNTriplet.get(nbTriplet).size() < nbQueryToFetch) {
+                sortByNTriplet.get(nbTriplet).add(query);
+            }
+        }
+
+        for (int i = 0; i < sortByNTriplet.size(); i++) {
+            ArrayList<Query> queries = sortByNTriplet.get(i + 1);
+            for (Query query : queries) {
+                query.fetch(dictionary, indexation);
             }
         }
     }
