@@ -4,6 +4,7 @@ import qengine.program.Dictionary;
 import qengine.program.Indexation;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -199,7 +200,7 @@ public class Query {
         StringBuilder whereBuilder = new StringBuilder();
         for (Triplet clause : where) whereBuilder.append(clause).append("\n");
 
-        return "SELECT ?" + select + " WHERE {\n" + whereBuilder.toString() + " }";
+        return "SELECT ?v0 WHERE {\n" + whereBuilder.toString() + " }\n";
     }
 
     public boolean isEqual(Query newQuery) {
@@ -208,13 +209,18 @@ public class Query {
         }
 
         return newQuery.where.containsAll(where);
+    }
 
-//        for (Triplet triplet : where) {
-//            if (!newQuery.where.containsAll(where)) {
-//                System.out.println("triplet not in: " + triplet);
-//                System.out.println(newQuery.where.contains(triplet));
-//                return false;
-//            }
-//        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Query query = (Query) o;
+        return isEqual(query);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(select);
     }
 }

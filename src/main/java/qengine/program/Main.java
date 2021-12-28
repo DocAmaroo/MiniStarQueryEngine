@@ -26,8 +26,6 @@ import qengine.program.utils.Utils;
 import static java.lang.System.exit;
 
 final class Main {
-    private static Boolean WARM_UP = true;
-    private static final String baseURI = null;
 
     /**
      * Path to the working directory, the query file and the data file.
@@ -35,6 +33,12 @@ final class Main {
     public static String workingDir = "";
     private static String queryPath;
     private static String dataPath;
+
+    private static Boolean WARM_UP = true;
+    private static Boolean REMOVE_DUPLICATES = false;
+    private static String FOLDER_NO_DUPLICATES = "noDuplicates";
+    private static String FILE_NO_DUPLICATES_NAME = "noDuplicates";
+    private static final String baseURI = null;
 
     /**
      * Instance of the dictionary and the indexes
@@ -53,7 +57,7 @@ final class Main {
      * ex: key=1 represent the number of queries with 1 conditions, i=1 with 2 conditions etc...
      */
     private static HashMap<Integer, Integer> nbQueriesByNTriplets = new HashMap<>();
-    private static HashMap<Integer, ArrayList<Integer>> queriesIdByNTriplets = new HashMap<>();
+    private static HashMap<Integer, ArrayList<Query>> queriesSortByNbTriplet = new HashMap<>();
 
     // ========================================================================
 
@@ -91,16 +95,52 @@ final class Main {
         System.out.println(Utils.HLINE);
 
         // Remove duplicates
-        nbDuplicates = queries.size();
-        queries = removeDuplicateQuery();
-        nbDuplicates -= queries.size();
+        if (REMOVE_DUPLICATES) {
 
+            System.out.println("[i] Removing duplicates");
+
+            int saveTotalQuery = getTotalQuery();
+            startTimer = System.currentTimeMillis();
+            removeDuplicateQuery();
+            endTimer = System.currentTimeMillis() - startTimer;
+            nbDuplicates = saveTotalQuery - queries.size();
+
+            FileWriter fileWriter;
+            BufferedWriter bufferedWriter;
+            PrintWriter outputFile;
+
+            try {
+                if (!workingDir.isBlank()) FOLDER_NO_DUPLICATES = workingDir + "/" + FOLDER_NO_DUPLICATES;
+                File file = new File(FOLDER_NO_DUPLICATES);
+
+                // Create the output folder if it doesn't exist
+                if (!file.exists() && !file.mkdirs()) {
+                    System.err.println("[!] Cannot created output folder");
+                } else {
+                    String absoluteFilePath = FOLDER_NO_DUPLICATES + "/" + FILE_NO_DUPLICATES_NAME + ".queryset";
+                    fileWriter = new FileWriter(absoluteFilePath);
+                    bufferedWriter = new BufferedWriter(fileWriter);
+                    outputFile = new PrintWriter(bufferedWriter);
+
+                    System.out.println("[i] Writing the new file...");
+                    for (Query query : queries) {
+                        outputFile.write(query.toString());
+                    }
+                    System.out.println("[+] New file has been created at: " + absoluteFilePath);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("[+] Removing duplicates done (" + endTimer + "ms)");
+            System.out.println(Utils.HLINE);
+        }
 
         // Warm up
         if (WARM_UP) {
-            setQueriesByNTriplets();
-
             System.out.println("[i] Warm up...");
+            //setQueriesByNTriplets();
+
             startTimer = System.currentTimeMillis();
             warmup();
             endTimer = System.currentTimeMillis() - startTimer;
@@ -126,7 +166,8 @@ final class Main {
         System.out.println("\t* Number of query with response: " + nbQueryWithResponse);
         System.out.println("\t* Number of query without response " + (queries.size() - nbQueryWithResponse));
         System.out.println("\t* Number of query duplicate " + nbDuplicates);
-        if (WARM_UP) System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
+        if (WARM_UP)
+            System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
     }
 
     // ========================================================================
@@ -274,19 +315,13 @@ final class Main {
             q.addTriplet(triplet);
         }
 
-        queries.add(q);
-    }
-
-    private static void setQueriesByNTriplets() {
-        for (Query query : queries) {
-            int nbTriplet = query.getNbTriplet();
-            if (!nbQueriesByNTriplets.containsKey(nbTriplet)) {
-                nbQueriesByNTriplets.put(nbTriplet, 1);
-                queriesIdByNTriplets.put(nbTriplet, new ArrayList<>(List.of(queries.size() - 1)));
-            } else {
-                nbQueriesByNTriplets.put(nbTriplet, nbQueriesByNTriplets.get(nbTriplet) + 1);
-                queriesIdByNTriplets.get(nbTriplet).add(queries.size() - 1);
-            }
+        int nbTriplet = q.getNbTriplet();
+        if (!queriesSortByNbTriplet.containsKey(nbTriplet)) {
+            queriesSortByNbTriplet.put(nbTriplet, new ArrayList<>(List.of(q)));
+            nbQueriesByNTriplets.put(nbTriplet, 1);
+        } else {
+            queriesSortByNbTriplet.get(nbTriplet).add(q);
+            nbQueriesByNTriplets.put(nbTriplet, nbQueriesByNTriplets.get(nbTriplet) + 1);
         }
     }
 
@@ -315,16 +350,25 @@ final class Main {
     }
 
     private static void warmup() {
+        // We want 5% of each type of patrons
         int nbQueryToFetch = (int) Math.ceil(queries.size() * 0.05);
 
-        for (int i = 0; i < queriesIdByNTriplets.size(); i++) {
-            ArrayList<Integer> queriesToFetch = queriesIdByNTriplets.get(i+1);
+        HashMap<Integer, ArrayList<Query>> sortByNTriplet = new HashMap<>();
 
-            int j=0;
-            while(j < nbQueryToFetch && j < queriesToFetch.size()) {
-                int queryIndex = queriesToFetch.get(j);
-                queries.get(queryIndex).fetch(dictionary, indexation);
-                j++;
+        for (Query query : queries) {
+            int nbTriplet = query.getNbTriplet();
+
+            if (!sortByNTriplet.containsKey(nbTriplet)) {
+                sortByNTriplet.put(nbTriplet, new ArrayList<>(List.of(query)));
+            } else if (sortByNTriplet.get(nbTriplet).size() < nbQueryToFetch) {
+                sortByNTriplet.get(nbTriplet).add(query);
+            }
+        }
+
+        for (int i = 0; i < sortByNTriplet.size(); i++) {
+            ArrayList<Query> queries = sortByNTriplet.get(i + 1);
+            for (Query query : queries) {
+                query.fetch(dictionary, indexation);
             }
         }
     }
@@ -396,26 +440,28 @@ final class Main {
                 break;
             case "-warmup":
                 WARM_UP = !value.equals("f");
+                break;
+            case "-rmd":
+                REMOVE_DUPLICATES = true;
+                FILE_NO_DUPLICATES_NAME = value;
+                break;
         }
     }
 
-    public static ArrayList<Query> removeDuplicateQuery() {
-        ArrayList<Query> noDuplicate = new ArrayList<>();
-        ArrayList<Integer> toExclude = new ArrayList<>();
-
-        for (int i = 0; i < queries.size(); i++) {
-            if (!toExclude.contains(i)) {
-                Query query = queries.get(i);
-                noDuplicate.add(query);
-
-                for (int j = i + 1; j < queries.size(); j++) {
-                    if (query.isEqual(queries.get(j))) {
-                        toExclude.add(j);
-                    }
-                }
-            }
+    public static void removeDuplicateQuery() {
+        for (int i=0; i < queriesSortByNbTriplet.size(); i++) {
+            ArrayList<Query> queriesOfNbTriplet = queriesSortByNbTriplet.get(i+1);
+            ArrayList<Query> distinctQuery = queriesOfNbTriplet.stream().distinct().collect(Collectors.toCollection(ArrayList::new));
+            nbQueriesByNTriplets.put(i+1, distinctQuery.size());
+            queries.addAll(distinctQuery);
         }
+    }
 
-        return noDuplicate;
+    public static int getTotalQuery() {
+        int res = 0;
+        for (int i=0; i < nbQueriesByNTriplets.size(); i++) {
+            res += nbQueriesByNTriplets.get(i+1);
+        }
+        return res;
     }
 }
