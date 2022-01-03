@@ -38,6 +38,7 @@ final class Main {
     private static String queryPath;
     private static String dataPath;
 
+    private static Boolean EXEC_JENA = false;
     private static Boolean WARM_UP = true;
     private static Boolean REMOVE_DUPLICATES = false;
     private static String FOLDER_NO_DUPLICATES = "noDuplicates";
@@ -79,8 +80,8 @@ final class Main {
 
         // Utiliser pour stocker le temps de départ et de fin d'évaluation
         long mainExecutionTime = System.currentTimeMillis();
-        long startTimer;
-        long endTimer;
+        long startStep, endStep;
+        long startTimer, endTimer;
 
         // For verbose only
         StringBuilder strBuilder = new StringBuilder();
@@ -88,38 +89,22 @@ final class Main {
         // Start by handling arguments give
         handleArguments(args);
 
-        long startStep = System.currentTimeMillis();
-        // ============ JENA
-        // Handle data
-        System.out.println("[i] Parsing data Jena...");
-        startTimer = System.currentTimeMillis();
-        initJenaModel();
-        endTimer = System.currentTimeMillis() - startTimer;
-        System.out.println("[+] Parsing data done (" + endTimer + "ms)");
-        System.out.println(Utils.HLINE);
 
-        // Handle queries
-        System.out.println("[i] Jena Parsing queries...");
-        startTimer = System.currentTimeMillis();
-        parseQueries(queryPath, true);
-        endTimer = System.currentTimeMillis() - startTimer;
-        System.out.println("[+] Jena queries  done (" + endTimer + "ms)");
-        System.out.println(Utils.HLINE);
+        // ======================================
+        // JENA
+        if (EXEC_JENA) {
+            startStep = System.currentTimeMillis();
+            executeJena();
+            endStep = System.currentTimeMillis() - startStep;
+            System.out.println("[i] Jena complete (" + endStep + "ms)");
+            System.out.println(Utils.HLINE);
+        }
 
-        // Fetch all queries
-        System.out.println("[i] Fetching with Jena ...");
-        startTimer = System.currentTimeMillis();
-        fetchQueryWithJena();
-        endTimer = System.currentTimeMillis() - startTimer;
-        System.out.println("[+] Fetching done (" + endTimer + "ms)");
-        System.out.println(Utils.HLINE);
 
-        long endStep = System.currentTimeMillis() - startStep;
-        System.out.println("[i] Jena complete (" + endStep + "ms)");
-        System.out.println(Utils.HLINE);
-
+        // ======================================
+        // Our engine
         startStep = System.currentTimeMillis();
-        // ============ Our engine
+
         // Handle data
         System.out.println("[i] Parsing data...");
         startTimer = System.currentTimeMillis();
@@ -212,7 +197,8 @@ final class Main {
         System.out.println("\t* Total of query: " + queries.size());
         System.out.println("\t* Number of query with response: " + nbQueryWithResponse);
         System.out.println("\t* Number of query without response " + (queries.size() - nbQueryWithResponse));
-        System.out.println("\t* Number of query duplicate " + nbDuplicates);
+        if (REMOVE_DUPLICATES)
+            System.out.println("\t* Number of query duplicate " + nbDuplicates);
         if (WARM_UP)
             System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
     }
@@ -458,7 +444,7 @@ final class Main {
             if (args[i].startsWith("-")) {
                 String optionName = args[i];
 
-                if (optionName.equals("-verbose")) {
+                if (optionName.equals("-verbose") || optionName.equals("-jena")) {
                     applyArgument(optionName, "");
                 } else {
 
@@ -507,6 +493,9 @@ final class Main {
                 REMOVE_DUPLICATES = true;
                 FILE_NO_DUPLICATES_NAME = value;
                 break;
+            case "-jena":
+                EXEC_JENA = true;
+                break;
         }
     }
 
@@ -525,6 +514,35 @@ final class Main {
             res += nbQueriesByNTriplets.get(i+1);
         }
         return res;
+    }
+
+    public static void executeJena() {
+        long startTimer;
+        long endTimer;
+
+        // Handle data
+        System.out.println("[i] Jena Parsing data...");
+        startTimer = System.currentTimeMillis();
+        initJenaModel();
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Parsing data done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        // Handle queries
+        System.out.println("[i] Jena Parsing queries...");
+        startTimer = System.currentTimeMillis();
+        parseQueries(queryPath, true);
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Parsing queries  done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        // Fetch all queries
+        System.out.println("[i] Fetching with Jena ...");
+        startTimer = System.currentTimeMillis();
+        fetchQueryWithJena();
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Fetching done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
     }
 
     public static void initJenaModel() {
