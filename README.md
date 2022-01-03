@@ -54,4 +54,18 @@ Here is the available options you can use to execute the program:
 * `-queries` <path/to/file> &rarr; absolute path to the queries file, or the relative from a working directory specified;
 * `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified;
 * `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output;
+* `-warmup` <t/f> &rarr; allow to activate or not the warmup. By default is true, otherwise use f
+* `-rmd` <filename> &rarr; save on the path give the queries without duplicates. By default save on workingDir/noDuplicates/filename
 * `-verbose` &rarr; print all information during execution process on the console. (tips: doesn't affect logs output)
+* `-jena` &rarr; execute Jena on the data and queries given.
+
+<details><summary>Samples</summary>
+
+```bash
+java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset
+```
+
+```bash
+java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -warmup t -jena
+```
+</details>
