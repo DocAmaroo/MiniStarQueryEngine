@@ -38,7 +38,7 @@ Execute the query engine with the dataset and the queries given:
 java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset
 ```
 
-Execute the query engine with the dataset and the queries given by using the working directory. The system will not warmup and also add a benchmark with Jena
+Execute the query engine with the dataset and the queries given by using the working directory. The system will not warmup and also add a benchmark with Jena:
 ```
 java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -nowarmup -jena
 ```
