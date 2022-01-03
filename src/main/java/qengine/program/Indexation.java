@@ -10,14 +10,14 @@ public class Indexation {
     private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> pos;
     private TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> spo;
 
-    private HashMap<Integer, Integer> frequences; // ID de la valeur ; frequence d'apparition
+    private final HashMap<Integer, Integer> frequencies; // ID de la valeur ; frequence d'apparition
 
     public Indexation() {
         ops = new TreeMap<>();
         pos = new TreeMap<>();
         spo = new TreeMap<>();
 
-        frequences = new HashMap<Integer, Integer>();
+        frequencies = new HashMap<Integer, Integer>();
     }
 
     public TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> getPos() {
@@ -28,12 +28,16 @@ public class Indexation {
         return ops;
     }
 
-    public HashMap<Integer, Integer> getFrequences() {
-        return frequences;
+    public TreeMap<Integer, TreeMap<Integer, TreeSet<Integer>>> getSpo() {
+        return spo;
     }
 
-    public Integer getFrequence(int key) {
-        return frequences.get(key);
+    public HashMap<Integer, Integer> getFrequencies() {
+        return frequencies;
+    }
+
+    public Integer getFrequency(int key) {
+        return frequencies.get(key);
     }
 
     /**
@@ -76,10 +80,10 @@ public class Indexation {
     }
 
     private void updFrequency(int n) {
-        if (frequences.containsKey(n)) {
-            frequences.replace(n, frequences.get(n) + 1);
+        if (frequencies.containsKey(n)) {
+            frequencies.replace(n, frequencies.get(n) + 1);
         } else {
-            frequences.put(n, 1);
+            frequencies.put(n, 1);
         }
     }
 

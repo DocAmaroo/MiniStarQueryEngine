@@ -54,8 +54,8 @@ public class Query {
         }
 
         // Get the frequences
-        int predFreq = index.getFrequence(predValue);
-        int objFreq = index.getFrequence(objValue);
+        int predFreq = index.getFrequency(predValue);
+        int objFreq = index.getFrequency(objValue);
 
         // Check if we found a value for both frequency, else no response available
         if (predFreq == -1 || objFreq == -1) {
@@ -198,7 +198,7 @@ public class Query {
 
         // Transform the where clause into a string
         StringBuilder whereBuilder = new StringBuilder();
-        for (Triplet clause : where) whereBuilder.append(clause).append("\n");
+        for (Triplet triplet : where) whereBuilder.append(triplet).append("\n");
 
         return "SELECT ?v0 WHERE {\n" + whereBuilder.toString() + " }\n";
     }

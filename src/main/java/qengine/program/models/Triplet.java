@@ -35,6 +35,6 @@ public class Triplet {
 
     @Override
     public String toString() {
-        return "\t?" + getSubject() + " " + getPredicate() + " " + getObject();
+        return "\t?" + getSubject() + " <" + getPredicate() + "> <" + getObject() + "> .";
     }
 }

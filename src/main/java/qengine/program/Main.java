@@ -7,6 +7,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.vocabulary.VCARD;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.helpers.StatementPatternCollector;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
@@ -34,11 +38,12 @@ final class Main {
     private static String queryPath;
     private static String dataPath;
 
+    private static Boolean EXEC_JENA = false;
     private static Boolean WARM_UP = true;
     private static Boolean REMOVE_DUPLICATES = false;
     private static String FOLDER_NO_DUPLICATES = "noDuplicates";
     private static String FILE_NO_DUPLICATES_NAME = "noDuplicates";
-    private static final String baseURI = null;
+    private static final String baseURI = "http://www.w3.org/";
 
     /**
      * Instance of the dictionary and the indexes
@@ -59,6 +64,12 @@ final class Main {
     private static HashMap<Integer, Integer> nbQueriesByNTriplets = new HashMap<>();
     private static HashMap<Integer, ArrayList<Query>> queriesSortByNbTriplet = new HashMap<>();
 
+    /** Jena
+     *
+     */
+    private static Model model;
+    private static ArrayList<org.apache.jena.query.Query> jQueries = new ArrayList<>();
+
     // ========================================================================
 
     /**
@@ -69,8 +80,8 @@ final class Main {
 
         // Utiliser pour stocker le temps de départ et de fin d'évaluation
         long mainExecutionTime = System.currentTimeMillis();
-        long startTimer;
-        long endTimer;
+        long startStep, endStep;
+        long startTimer, endTimer;
 
         // For verbose only
         StringBuilder strBuilder = new StringBuilder();
@@ -78,7 +89,23 @@ final class Main {
         // Start by handling arguments give
         handleArguments(args);
 
-        // Parse the file containing the data
+
+        // ======================================
+        // JENA
+        if (EXEC_JENA) {
+            startStep = System.currentTimeMillis();
+            executeJena();
+            endStep = System.currentTimeMillis() - startStep;
+            System.out.println("[i] Jena complete (" + endStep + "ms)");
+            System.out.println(Utils.HLINE);
+        }
+
+
+        // ======================================
+        // Our engine
+        startStep = System.currentTimeMillis();
+
+        // Handle data
         System.out.println("[i] Parsing data...");
         startTimer = System.currentTimeMillis();
         parseData();
@@ -86,10 +113,10 @@ final class Main {
         System.out.println("[+] Parsing data done (" + endTimer + "ms)");
         System.out.println(Utils.HLINE);
 
-        // Parse the file containing all the query
+        // Handle queries
         System.out.println("[i] Parsing queries...");
         startTimer = System.currentTimeMillis();
-        parseQueries(queryPath);
+        parseQueries(queryPath, false);
         endTimer = System.currentTimeMillis() - startTimer;
         System.out.println("[+] Parsing queries done (" + endTimer + "ms)");
         System.out.println(Utils.HLINE);
@@ -154,6 +181,11 @@ final class Main {
         fetchQuery();
         endTimer = System.currentTimeMillis() - startTimer;
         System.out.println("[+] Fetching done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        endStep = System.currentTimeMillis() - startStep;
+        System.out.println("[i] Local engine complete (" + endStep + "ms)");
+        System.out.println(Utils.HLINE);
 
 
         // Logs only
@@ -165,7 +197,8 @@ final class Main {
         System.out.println("\t* Total of query: " + queries.size());
         System.out.println("\t* Number of query with response: " + nbQueryWithResponse);
         System.out.println("\t* Number of query without response " + (queries.size() - nbQueryWithResponse));
-        System.out.println("\t* Number of query duplicate " + nbDuplicates);
+        if (REMOVE_DUPLICATES)
+            System.out.println("\t* Number of query duplicate " + nbDuplicates);
         if (WARM_UP)
             System.out.println("\t* Number of query by number of conditions {nbConditions=nbQuery} \n" + nbQueriesByNTriplets);
     }
@@ -228,7 +261,7 @@ final class Main {
     public static void parseDataFile(AbstractRDFHandler abstractRDFHandler, String filename) throws IOException {
         try (Reader dataReader = new FileReader(filename)) {
             // On va parser des données au format ntriples
-            RDFParser rdfParser = Rio.createParser(RDFFormat.NTRIPLES);
+            RDFParser rdfParser = Rio.createParser(RDFFormat.RDFXML);
 
             // On utilise notre implémentation de handler
             rdfParser.setRDFHandler(abstractRDFHandler);
@@ -241,7 +274,7 @@ final class Main {
     /**
      * Traite chaque requête lue dans {@link #queryPath} avec {@link #processAQuery(ParsedQuery)}.
      */
-    private static void parseQueries(String filePath) {
+    private static void parseQueries(String filePath, boolean flag) {
         File rep = new File(filePath);
 
         if (rep.isDirectory()) {
@@ -258,12 +291,12 @@ final class Main {
                     exit(0);
                 }
                 for (String file : files) {
-                    parseQueriesFile(queryPath + "/" + file);
+                    parseQueriesFile(queryPath + "/" + file, flag);
                 }
             }
         } else {
             if (filePath.endsWith(".queryset")) {
-                parseQueriesFile(filePath);
+                parseQueriesFile(filePath, flag);
             } else {
                 System.err.println("[!] Le fichier de query spécifié est invalide (suffixe .queryset non reconnus)");
                 exit(0);
@@ -271,7 +304,7 @@ final class Main {
         }
     }
 
-    private static void parseQueriesFile(String file) {
+    private static void parseQueriesFile(String file, boolean flag) {
         try (Stream<String> lineStream = Files.lines(Paths.get(file))) {
             SPARQLParser sparqlParser = new SPARQLParser();
             Iterator<String> lineIterator = lineStream.iterator();
@@ -286,11 +319,17 @@ final class Main {
                 queryString.append(line);
 
                 if (line.trim().endsWith("}")) {
-                    ParsedQuery query = sparqlParser.parseQuery(queryString.toString(), baseURI);
+                    if (flag) {
+                        // Using Jena
+                        jQueries.add(QueryFactory.create(queryString.toString()));
+                    } else {
+                        // Process the query
+                        ParsedQuery query = sparqlParser.parseQuery(queryString.toString(), baseURI);
+                        processAQuery(query);
+                    }
 
-                    processAQuery(query); // Traitement de la requête, à adapter/réécrire pour votre programme
-
-                    queryString.setLength(0); // Reset le buffer de la requête en chaine vide
+                    // Reset le buffer de la requête en chaine vide
+                    queryString.setLength(0);
                 }
             }
         } catch (Exception e) {
@@ -314,6 +353,8 @@ final class Main {
 
             q.addTriplet(triplet);
         }
+
+        if (!REMOVE_DUPLICATES) queries.add(q);
 
         int nbTriplet = q.getNbTriplet();
         if (!queriesSortByNbTriplet.containsKey(nbTriplet)) {
@@ -346,6 +387,13 @@ final class Main {
                 }
             }
             if (Log.isVerbose) System.out.println(Utils.HLINE);
+        }
+    }
+
+    private static void fetchQueryWithJena() {
+        for (org.apache.jena.query.Query query : jQueries) {
+            QueryExecution qef = QueryExecutionFactory.create(query, model);
+            ResultSet res = qef.execSelect();
         }
     }
 
@@ -396,7 +444,7 @@ final class Main {
             if (args[i].startsWith("-")) {
                 String optionName = args[i];
 
-                if (optionName.equals("-verbose")) {
+                if (optionName.equals("-verbose") || optionName.equals("-jena") || optionName.equals("-nowarmup")) {
                     applyArgument(optionName, "");
                 } else {
 
@@ -438,12 +486,15 @@ final class Main {
             case "-verbose":
                 Log.setIsVerbose(true);
                 break;
-            case "-warmup":
-                WARM_UP = !value.equals("f");
+            case "-nowarmup":
+                WARM_UP = false;
                 break;
             case "-rmd":
                 REMOVE_DUPLICATES = true;
                 FILE_NO_DUPLICATES_NAME = value;
+                break;
+            case "-jena":
+                EXEC_JENA = true;
                 break;
         }
     }
@@ -463,5 +514,43 @@ final class Main {
             res += nbQueriesByNTriplets.get(i+1);
         }
         return res;
+    }
+
+    public static void executeJena() {
+        long startTimer;
+        long endTimer;
+
+        // Handle data
+        System.out.println("[i] Jena Parsing data...");
+        startTimer = System.currentTimeMillis();
+        initJenaModel();
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Parsing data done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        // Handle queries
+        System.out.println("[i] Jena Parsing queries...");
+        startTimer = System.currentTimeMillis();
+        parseQueries(queryPath, true);
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Parsing queries  done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+
+        // Fetch all queries
+        System.out.println("[i] Fetching with Jena ...");
+        startTimer = System.currentTimeMillis();
+        fetchQueryWithJena();
+        endTimer = System.currentTimeMillis() - startTimer;
+        System.out.println("[+] Fetching done (" + endTimer + "ms)");
+        System.out.println(Utils.HLINE);
+    }
+
+    public static void initJenaModel() {
+
+        // Create Jena Model by reading data file
+        model = ModelFactory.createDefaultModel();
+        InputStream in = RDFDataMgr.open(dataPath);
+        if (in == null) throw new IllegalArgumentException("File: " + dataPath + " not found");
+        model.read(in, null);
     }
 }
