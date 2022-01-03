@@ -444,7 +444,7 @@ final class Main {
             if (args[i].startsWith("-")) {
                 String optionName = args[i];
 
-                if (optionName.equals("-verbose") || optionName.equals("-jena")) {
+                if (optionName.equals("-verbose") || optionName.equals("-jena") || optionName.equals("-nowarmup")) {
                     applyArgument(optionName, "");
                 } else {
 
@@ -486,8 +486,8 @@ final class Main {
             case "-verbose":
                 Log.setIsVerbose(true);
                 break;
-            case "-warmup":
-                WARM_UP = !value.equals("f");
+            case "-nowarmup":
+                WARM_UP = false;
                 break;
             case "-rmd":
                 REMOVE_DUPLICATES = true;

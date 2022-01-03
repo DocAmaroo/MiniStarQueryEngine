@@ -49,15 +49,15 @@ The two samples below or equivalent.
 
 Here is the available options you can use to execute the program:
 
-* `-help` &rarr; show this message;
-* `-workingDir` <path/to/dir> &rarr; path to the directory containing queries or/and data. This value is optional;
-* `-queries` <path/to/file> &rarr; absolute path to the queries file, or the relative from a working directory specified;
-* `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified;
-* `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output;
-* `-warmup` <t/f> &rarr; allow to activate or not the warmup. By default is true, otherwise use f
-* `-rmd` <filename> &rarr; save on the path give the queries without duplicates. By default save on workingDir/noDuplicates/filename
-* `-verbose` &rarr; print all information during execution process on the console. (tips: doesn't affect logs output)
+* `-help` &rarr; show this message.
+* `-workingDir` <path/to/dir> &rarr; path to the directory containing queries or/and data. This value is optional.
+* `-queries` <path/to/file> &rarr; absolute path to the queries file, or the relative from a working directory specified.
+* `-data` <path/to/file> &rarr; absolute path to the data file, or the relative from a working directory specified.
+* `-output` <path/to/dir> &rarr; set the log output directory. By default is <path/to/qengine.jar>/output.
+* `-rmd` <filename> &rarr; save on the path give the queries without duplicates. By default save on workingDir/noDuplicates/filenam.
+* `-verbose` &rarr; print all information during execution process on the console. (tips: doesn't affect logs output.
 * `-jena` &rarr; execute Jena on the data and queries given.
+* `-nowarmup` &rarr; allow to desactivate the warmup.
 
 <details><summary>Samples</summary>
 
@@ -66,6 +66,6 @@ java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.q
 ```
 
 ```bash
-java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -warmup t -jena
+java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -nowarmup t -jena
 ```
 </details>
