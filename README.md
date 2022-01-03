@@ -30,16 +30,19 @@ java -jar qengine.jar [OPTIONS]
 
 The options available are listed [here](#Options)
 
-<details><summary>See usage sample</summary>
+<details><summary>See execution samples</summary>
 <br/>
 
-The two samples below or equivalent.
+Execute the query engine with the dataset and the queries given:
+```
+java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset
+```
 
-`java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset -verbose`
-
-`java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -verbose`
-
-</details><br/>
+Execute the query engine with the dataset and the queries given by using the working directory. The system will not warmup and also add a benchmark with Jena
+```
+java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -nowarmup -jena
+```
+</details>
 
 ### Alternative
 
@@ -58,14 +61,3 @@ Here is the available options you can use to execute the program:
 * `-verbose` &rarr; print all information during execution process on the console. (tips: doesn't affect logs output.
 * `-jena` &rarr; execute Jena on the data and queries given.
 * `-nowarmup` &rarr; allow to desactivate the warmup.
-
-<details><summary>Samples</summary>
-
-```bash
-java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset
-```
-
-```bash
-java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -nowarmup t -jena
-```
-</details>
