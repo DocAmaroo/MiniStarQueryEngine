@@ -32,10 +32,12 @@ public class Utils {
         System.out.println("\t -queries <path/to/file> --> absolute path to the queries file, or the relative from a working directory specified");
         System.out.println("\t -data <path/to/file> --> absolute path to the data file, or the relative from a working directory specified");
         System.out.println("\t -output <path/to/dir> --> set the log output directory. By default is <path/to/qengine.jar>/output");
+        System.out.println("\t -rmd filename --> save on the path give the queries without duplicates. By default save on workingDir/noDuplicates/filename");
         System.out.println("\t -verbose --> print all information during execution process on the console. (tips: doesn't affect logs output)");
-        System.out.println("\t -warmup <t/f> --> allow to activate or not the warmup. By default is true, otherwise use f");
+        System.out.println("\t -jena --> execute Jena on the data and queries given.");
+        System.out.println("\t -nowarmup --> allow to desactivate the warmup");
         System.out.println("\n[i] Usage example");
-        System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset");
-        System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset");
+        System.out.println("\t java -jar qengine.jar -data ~/data/sample_data.nt -queries ~/data/sample_query.queryset -verbose");
+        System.out.println("\t java -jar qengine.jar -workingDir ~/data -data sample_data.nt -queries sample_query.queryset -nowarmup -jena");
     }
 }

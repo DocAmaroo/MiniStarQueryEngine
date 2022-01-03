@@ -4,6 +4,7 @@ import qengine.program.Dictionary;
 import qengine.program.Indexation;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -53,8 +54,8 @@ public class Query {
         }
 
         // Get the frequences
-        int predFreq = index.getFrequence(predValue);
-        int objFreq = index.getFrequence(objValue);
+        int predFreq = index.getFrequency(predValue);
+        int objFreq = index.getFrequency(objValue);
 
         // Check if we found a value for both frequency, else no response available
         if (predFreq == -1 || objFreq == -1) {
@@ -197,9 +198,9 @@ public class Query {
 
         // Transform the where clause into a string
         StringBuilder whereBuilder = new StringBuilder();
-        for (Triplet clause : where) whereBuilder.append(clause).append("\n");
+        for (Triplet triplet : where) whereBuilder.append(triplet).append("\n");
 
-        return "SELECT ?" + select + " WHERE {\n" + whereBuilder.toString() + " }";
+        return "SELECT ?v0 WHERE {\n" + whereBuilder.toString() + " }\n";
     }
 
     public boolean isEqual(Query newQuery) {
@@ -208,13 +209,18 @@ public class Query {
         }
 
         return newQuery.where.containsAll(where);
+    }
 
-//        for (Triplet triplet : where) {
-//            if (!newQuery.where.containsAll(where)) {
-//                System.out.println("triplet not in: " + triplet);
-//                System.out.println(newQuery.where.contains(triplet));
-//                return false;
-//            }
-//        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Query query = (Query) o;
+        return isEqual(query);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(select);
     }
 }
